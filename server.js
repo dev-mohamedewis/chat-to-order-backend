@@ -18,8 +18,8 @@ app.use(express.json());
 // 1. الاتصال بـ MongoDB Atlas
 if (process.env.MONGODB_URI) {
   mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ Connected to MongoDB Atlas'))
-    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+    .then(() => console.log(' Connected to MongoDB Atlas'))
+    .catch(err => console.error(' MongoDB Connection Error:', err));
 }
 
 // 2. تعريف موديل التاجر (Merchant Model)
@@ -43,14 +43,12 @@ const SYSTEM_PROMPT = `
 You are an expert Egyptian E-commerce Logistics Assistant specialized in extracting shipping info from Egyptian Arabic text.
 Return ONLY a raw JSON object matching this schema (no markdown, no backticks):
 {
-  "name": string or null,
+  "customerName": string or null,
   "phone": 11-digit string starting with 01 or null,
   "secondary_phone": string or null,
   "governorate": official Egyptian governorate in Arabic or null,
-  "city": area/city in Arabic or null,
-  "street_address": street/building/floor details or null,
-  "landmark": nearby landmark or null,
-  "notes": special delivery instructions or order details or null
+  "address": street/building/floor/city details in Arabic or null,
+  "items": order items details or null
 }
 Convert Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) to Western (0123456789).
 `;
@@ -64,8 +62,8 @@ async function saveToGoogleSheet(appsScriptUrl, data) {
   });
 
   const result = await response.json();
-  if (result.result !== 'success') {
-    throw new Error(result.error || 'Failed to save order to Google Sheet');
+  if (result.status !== 'success' && result.result !== 'success') {
+    throw new Error(result.error || result.message || 'Failed to save order to Google Sheet');
   }
   return result;
 }
@@ -82,7 +80,7 @@ app.post('/api/parse-and-save', async (req, res) => {
       return res.status(401).json({ success: false, error: 'مفتاح الـ API Key مطلوب' });
     }
 
-    // 🔍 التحقق من التاجر في قاعدة البيانات
+    // التحقق من التاجر في قاعدة البيانات
     const merchant = await Merchant.findOne({ apiKey });
 
     if (!merchant) {
@@ -97,9 +95,9 @@ app.post('/api/parse-and-save', async (req, res) => {
       return res.status(403).json({ success: false, error: 'لقد استنفدت حد الطلبات المسموح به في باقتك' });
     }
 
-    // 🤖 تحليل النص باستخدام Gemini
+    // تحليل النص باستخدام Gemini الاصدار المستقر
     const aiResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       contents: text,
       config: {
         systemInstruction: SYSTEM_PROMPT,
@@ -110,10 +108,10 @@ app.post('/api/parse-and-save', async (req, res) => {
 
     const parsedData = JSON.parse(aiResponse.text);
 
-    // 📊 إرسال البيانات لشيت جوجل الخاص بالتاجر
+    // إرسال البيانات لشيت جوجل الخاص بالتاجر
     await saveToGoogleSheet(merchant.googleSheetUrl, parsedData);
 
-    // ➕ خصم طلب من رصيد التاجر
+    // خصم طلب من رصيد التاجر
     merchant.ordersUsed += 1;
     await merchant.save();
 
@@ -134,7 +132,7 @@ app.post('/api/parse-and-save', async (req, res) => {
 });
 
 // ==========================================
-// ⚙️ مسارات لوحة تحكم الأدمن (Admin Routes)
+// مسارات لوحة تحكم الأدمن (Admin Routes)
 // ==========================================
 
 // 1. إنشاء تاجر جديد
@@ -205,11 +203,10 @@ app.patch('/api/admin/merchants/:id', async (req, res) => {
 });
 
 // ==========================================
-// 📄 عرض لوحة الأدمن (Static Files)
+// عرض لوحة الأدمن (Static Files)
 // ==========================================
 app.use(express.static(__dirname));
 
-// التعديل في آخر ملف server.js
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'admin.html'));
 });
