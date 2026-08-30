@@ -110,7 +110,7 @@ app.post('/api/parse-and-save', async (req, res) => {
 
     // تحليل النص باستخدام Gemini (الموديل المستقر)
     const aiResponse = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3.6-flash',
       contents: text,
       config: {
         systemInstruction: SYSTEM_PROMPT,
