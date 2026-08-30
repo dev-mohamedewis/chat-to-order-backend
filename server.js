@@ -209,8 +209,9 @@ app.patch('/api/admin/merchants/:id', async (req, res) => {
 // ==========================================
 app.use(express.static(__dirname));
 
+// التعديل في آخر ملف server.js
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+  res.sendFile(path.join(process.cwd(), 'admin.html'));
 });
 
 // تشغيل المحلي والتصدير لـ Vercel
