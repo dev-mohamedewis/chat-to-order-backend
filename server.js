@@ -15,11 +15,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1. الاتصال بـ MongoDB Atlas
-if (process.env.MONGODB_URI) {
-  mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log(' Connected to MongoDB Atlas'))
-    .catch(err => console.error(' MongoDB Connection Error:', err));
+// 1. دالة الاتصال المحسّنة لبيئات Serverless (MongoDB Atlas)
+let isConnected = false;
+
+async function connectToDatabase() {
+  if (isConnected && mongoose.connection.readyState === 1) {
+    return;
+  }
+  if (process.env.MONGODB_URI) {
+    const db = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+    });
+    isConnected = db.connections[0].readyState === 1;
+    console.log('✅ Connected to MongoDB Atlas');
+  } else {
+    throw new Error('MONGODB_URI غير معرّف في متغيرات البيئة!');
+  }
 }
 
 // 2. تعريف موديل التاجر (Merchant Model)
@@ -36,7 +47,7 @@ const merchantSchema = new mongoose.Schema({
 
 const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', merchantSchema);
 
-// 3. تهيئة Google GenAI SDK (Gemini Flash)
+// 3. تهيئة Google GenAI SDK
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const SYSTEM_PROMPT = `
@@ -45,7 +56,6 @@ Return ONLY a raw JSON object matching this schema (no markdown, no backticks):
 {
   "customerName": string or null,
   "phone": 11-digit string starting with 01 or null,
-  "secondary_phone": string or null,
   "governorate": official Egyptian governorate in Arabic or null,
   "address": street/building/floor/city details in Arabic or null,
   "items": order items details or null
@@ -63,14 +73,17 @@ async function saveToGoogleSheet(appsScriptUrl, data) {
 
   const result = await response.json();
   if (result.status !== 'success' && result.result !== 'success') {
-    throw new Error(result.error || result.message || 'Failed to save order to Google Sheet');
+    throw new Error(result.error || result.message || 'فشل حفظ الطلب في Google Sheet');
   }
   return result;
 }
 
-// 5. الـ Endpoint الرئيسي لاستقبال الطلبات من إضافة كروم
+// 5. الـ Endpoint الرئيسي لاستقبال الطلبات من إضافة الكروم
 app.post('/api/parse-and-save', async (req, res) => {
   try {
+    // الاتصال بقاعدة البيانات أولاً وضمان الجاهزية
+    await connectToDatabase();
+
     const { text, apiKey } = req.body;
 
     if (!text) {
@@ -95,7 +108,7 @@ app.post('/api/parse-and-save', async (req, res) => {
       return res.status(403).json({ success: false, error: 'لقد استنفدت حد الطلبات المسموح به في باقتك' });
     }
 
-    // تحليل النص باستخدام Gemini الاصدار المستقر
+    // تحليل النص باستخدام Gemini (الموديل المستقر)
     const aiResponse = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
       contents: text,
@@ -125,8 +138,8 @@ app.post('/api/parse-and-save', async (req, res) => {
     console.error('Server Processing Error:', error);
     return res.status(500).json({
       success: false,
-      error: 'حدث خطأ أثناء معالجة الطلب',
-      details: error.message,
+      error: error.message || 'حدث خطأ أثناء معالجة الطلب',
+      details: error.toString(),
     });
   }
 });
@@ -138,6 +151,7 @@ app.post('/api/parse-and-save', async (req, res) => {
 // 1. إنشاء تاجر جديد
 app.post('/api/admin/merchants', async (req, res) => {
   try {
+    await connectToDatabase();
     const { adminKey, name, email, googleSheetUrl, orderLimit } = req.body;
 
     if (adminKey !== process.env.ADMIN_SECRET_KEY) {
@@ -164,6 +178,7 @@ app.post('/api/admin/merchants', async (req, res) => {
 // 2. عرض جميع التجار ومتابعة استهلاكهم
 app.get('/api/admin/merchants', async (req, res) => {
   try {
+    await connectToDatabase();
     const { adminKey } = req.query;
 
     if (adminKey !== process.env.ADMIN_SECRET_KEY) {
@@ -180,6 +195,7 @@ app.get('/api/admin/merchants', async (req, res) => {
 // 3. تعديل حالة التاجر (تفعيل / إيقاف / تجديد رصيد)
 app.patch('/api/admin/merchants/:id', async (req, res) => {
   try {
+    await connectToDatabase();
     const { adminKey, status, orderLimit } = req.body;
 
     if (adminKey !== process.env.ADMIN_SECRET_KEY) {
