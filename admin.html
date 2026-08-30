@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم النظام - Chat to Order SaaS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Cairo', sans-serif; } </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-indigo-900 text-white shadow-lg py-4 px-6 mb-8 flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold">⚙️ لوحة تحكم الأدمن</h1>
+      <p class="text-indigo-200 text-xs mt-1">إدارة التجار ومتابعة باقات نظام Chat to Order</p>
+    </div>
+    <div id="adminStatus" class="text-xs bg-indigo-800 px-3 py-1.5 rounded-full border border-indigo-700">
+      غير مسجّل
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto px-4">
+
+    <!-- Auth Card (Login) -->
+    <div id="loginCard" class="bg-white p-6 rounded-xl shadow-md max-w-md mx-auto mb-8 border border-slate-200">
+      <h2 class="text-lg font-bold mb-3 text-slate-800">🔐 تسجيل دخول الأدمن</h2>
+      <div class="mb-4">
+        <label class="block text-sm font-semibold mb-1">كلمة سر الأدمن (ADMIN_SECRET_KEY)</label>
+        <input type="password" id="adminSecretInput" placeholder="أدخل كلمة السر هنا..." 
+               class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-left" dir="ltr">
+      </div>
+      <button onclick="loginAdmin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition">
+        دخول اللوحة
+      </button>
+    </div>
+
+    <!-- Dashboard Content (Hidden by default) -->
+    <div id="dashboardContent" class="hidden space-y-8">
+
+      <!-- Add Merchant Form -->
+      <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+        <h2 class="text-xl font-bold mb-4 text-indigo-950 flex items-center gap-2">
+          <span>➕</span> إضافة تاجر جديد
+        </h2>
+        
+        <form id="addMerchantForm" onsubmit="handleAddMerchant(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">اسم المتجر / التاجر</label>
+            <input type="text" id="merchantName" required placeholder="مثال: متجر الأمل" class="w-full p-2.5 border rounded-lg">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">البريد الإلكتروني</label>
+            <input type="email" id="merchantEmail" required placeholder="merchant@gmail.com" class="w-full p-2.5 border rounded-lg text-left" dir="ltr">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">رابط Google Sheet Web App الخاص بالتاجر</label>
+            <input type="url" id="googleSheetUrl" required placeholder="https://script.google.com/macros/s/.../exec" class="w-full p-2.5 border rounded-lg text-left" dir="ltr">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">حد الطلبات (Order Limit)</label>
+            <input type="number" id="orderLimit" value="100" min="1" class="w-full p-2.5 border rounded-lg">
+          </div>
+
+          <div class="flex items-end">
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition shadow">
+              إنشاء حساب التاجر وتوليد API Key
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Merchants List Table -->
+      <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 overflow-hidden">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-slate-800">📊 قائمة التجار والاستهلاك</h2>
+          <button onclick="fetchMerchants()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border transition">
+            🔄 تحديث البيانات
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-right border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 text-xs font-bold border-b">
+                <th class="p-3">التاجر</th>
+                <th class="p-3">الـ API Key</th>
+                <th class="p-3">الاستهلاك</th>
+                <th class="p-3">الحالة</th>
+                <th class="p-3 text-center">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="merchantsTableBody" class="divide-y text-sm">
+              <!-- Dynamic Rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // ⚠️ ضع رابط سيرفر Vercel الخاص بك هنا
+    const API_BASE_URL = 'https://chat-to-order-backend-mohamed-ewis-projects.vercel.app';
+    let adminSecretKey = '';
+
+    function loginAdmin() {
+      const key = document.getElementById('adminSecretInput').value.trim();
+      if (!key) return alert('يرجى كتابة كلمة السر');
+      adminSecretKey = key;
+      fetchMerchants();
+    }
+
+    async function fetchMerchants() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/merchants?adminKey=${encodeURIComponent(adminSecretKey)}`);
+        const data = await res.json();
+
+        if (!data.success) {
+          alert(data.error || 'فشل الاتصال');
+          return;
+        }
+
+        // إخفاء كارت الدخول وإظهار اللوحة
+        document.getElementById('loginCard').classList.add('hidden');
+        document.getElementById('dashboardContent').classList.remove('hidden');
+        document.getElementById('adminStatus').innerText = '🟢 مسجّل كـ الأدمن';
+        document.getElementById('adminStatus').className = 'text-xs bg-emerald-800 text-emerald-100 px-3 py-1.5 rounded-full';
+
+        renderMerchants(data.merchants);
+      } catch (err) {
+        alert('حدث خطأ أثناء جلب التجار: ' + err.message);
+      }
+    }
+
+    function renderMerchants(merchants) {
+      const tbody = document.getElementById('merchantsTableBody');
+      tbody.innerHTML = '';
+
+      if (merchants.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">لا يوجد تجار مضافين حتى الآن</td></tr>`;
+        return;
+      }
+
+      merchants.forEach(m => {
+        const percent = Math.min(Math.round((m.ordersUsed / m.orderLimit) * 100), 100);
+        const isActive = m.status === 'active';
+
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-slate-50 transition';
+        row.innerHTML = `
+          <td class="p-3 font-semibold">
+            <div>${m.name}</div>
+            <div class="text-xs text-slate-400">${m.email}</div>
+          </td>
+          <td class="p-3 font-mono text-xs text-indigo-600 bg-slate-50 rounded px-2 py-1 select-all" dir="ltr">
+            ${m.apiKey}
+          </td>
+          <td class="p-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold">${m.ordersUsed} / ${m.orderLimit}</span>
+              <div class="w-24 bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div class="bg-indigo-600 h-full" style="width: ${percent}%"></div>
+              </div>
+            </div>
+          </td>
+          <td class="p-3">
+            <span class="px-2.5 py-1 text-xs rounded-full font-bold ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+              ${isActive ? 'مفعل' : 'موقف'}
+            </span>
+          </td>
+          <td class="p-3 text-center space-x-2 space-x-reverse">
+            <button onclick="toggleMerchantStatus('${m._id}', '${isActive ? 'suspended' : 'active'}')" 
+                    class="px-3 py-1 text-xs font-bold rounded-lg border transition ${isActive ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'}">
+              ${isActive ? 'إيقاف الحساب ⏸️' : 'تفعيل الحساب ▶️'}
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    async function handleAddMerchant(e) {
+      e.preventDefault();
+      const name = document.getElementById('merchantName').value;
+      const email = document.getElementById('merchantEmail').value;
+      const googleSheetUrl = document.getElementById('googleSheetUrl').value;
+      const orderLimit = Number(document.getElementById('orderLimit').value);
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/merchants`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminKey: adminSecretKey, name, email, googleSheetUrl, orderLimit })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert(`✅ تم إضافة التاجر بنجاح!\nالـ API Key الخاص به هو: ${data.merchant.apiKey}`);
+          document.getElementById('addMerchantForm').reset();
+          fetchMerchants();
+        } else {
+          alert('❌ خطأ: ' + data.error);
+        }
+      } catch (err) {
+        alert('حدث خطأ: ' + err.message);
+      }
+    }
+
+    async function toggleMerchantStatus(id, newStatus) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/merchants/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminKey: adminSecretKey, status: newStatus })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          fetchMerchants();
+        } else {
+          alert('❌ خطأ: ' + data.error);
+        }
+      } catch (err) {
+        alert('حدث خطأ: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -64,7 +64,7 @@ app.post('/api/parse-and-save', async (req, res) => {
     }
 
     const aiResponse = await ai.models.generateContent({
-      model: 'gemini-3.6-flash', // 👈 الموديل المعتمد حالياً
+      model: 'gemini-3.6-flash', 
       contents: text,
       config: {
         systemInstruction: SYSTEM_PROMPT,
@@ -91,6 +91,58 @@ app.post('/api/parse-and-save', async (req, res) => {
   }
 });
 
+// 1. إنشاء تاجر جديد
+app.post('/api/admin/merchants', async (req, res) => {
+  const { adminKey, name, email, googleSheetUrl, orderLimit } = req.body;
+
+  //حماية اللوحة بكلمة سر خاصة بي 
+  if (adminKey !== process.env.ADMIN_SECRET_KEY) {
+    return res.status(401).json({ success: false, error: 'غير مصرح لك بالدخول' });
+  }
+
+  // توليد API Key فريد أوتوماتيكياً للتاجر
+  const generatedApiKey = 'cto_live_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+
+  const newMerchant = new Merchant({
+    name,
+    email,
+    apiKey: generatedApiKey,
+    googleSheetUrl,
+    orderLimit: orderLimit || 100
+  });
+
+  await newMerchant.save();
+  res.json({ success: true, merchant: newMerchant });
+});
+
+// 2. عرض جميع التجار ومتابعة استهلاكهم
+app.get('/api/admin/merchants', async (req, res) => {
+  const { adminKey } = req.query;
+
+  if (adminKey !== process.env.ADMIN_SECRET_KEY) {
+    return res.status(401).json({ success: false, error: 'غير مصرح لك' });
+  }
+
+  const merchants = await Merchant.find().sort({ createdAt: -1 });
+  res.json({ success: true, merchants });
+});
+
+// 3. تعديل حالة التاجر (تفعيل / إيقاف / تجديد رصيد)
+app.patch('/api/admin/merchants/:id', async (req, res) => {
+  const { adminKey, status, orderLimit } = req.body;
+
+  if (adminKey !== process.env.ADMIN_SECRET_KEY) {
+    return res.status(401).json({ success: false, error: 'غير مصرح لك' });
+  }
+
+  const updatedMerchant = await Merchant.findByIdAndUpdate(
+    req.params.id,
+    { status, orderLimit },
+    { new: true }
+  );
+
+  res.json({ success: true, merchant: updatedMerchant });
+});
 // 5. تشغيل السيرفر
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
