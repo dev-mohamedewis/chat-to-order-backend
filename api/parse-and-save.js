@@ -58,7 +58,7 @@ Analyze the text and extract details into a raw JSON object matching this exact 
 Convert Eastern Arabic numerals to Western.
 `;
 
-const CANDIDATE_MODELS = ['gemini-3.6-flash','gemini-2.5-flash', 'gemini-1.5-flash'];
+const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -97,7 +97,6 @@ export default async function handler(req, res) {
         });
         
         let rawText = response.text.trim();
-        // تنظيف النتيجة لو فيها أي كود ماركداون بالخطأ
         rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
         parsedData = JSON.parse(rawText);
         break;
@@ -119,7 +118,15 @@ export default async function handler(req, res) {
     merchant.ordersUsed += 1;
     await merchant.save();
 
-    return res.json({ success: true, message: 'تم حفظ الطلب بنجاح', data: parsedData });
+    // إرجاع البيانات بأسماء الحقول المضبوطة عشان تظهر صح بدون undefined
+    return res.json({ 
+      success: true, 
+      message: 'تم حفظ الطلب بنجاح', 
+      data: parsedData,
+      ordersUsed: merchant.ordersUsed,
+      orderLimit: merchant.orderLimit,
+      remaining: merchant.orderLimit - merchant.ordersUsed
+    });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
