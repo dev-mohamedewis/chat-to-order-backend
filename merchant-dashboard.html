@@ -179,6 +179,13 @@
             </div>
         </section>
 
+        <div class="flex justify-between items-center mb-4">
+             <h2 class="text-lg font-bold text-emerald-400">📋 سجل الأوردرات المسجلة</h2>
+          <button onclick="exportToExcel()" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 px-4 py-2 rounded-xl text-xs font-semibold transition border border-emerald-600/30 flex items-center gap-2">
+                📥 تصدير إلى Excel (CSV)
+          </button>
+        </div>
+
         <!-- جدول الأوردرات -->
         <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 overflow-x-auto">
             <h2 class="text-lg font-bold text-emerald-400 mb-4">📋 سجل الأوردرات المسجلة</h2>
@@ -420,6 +427,46 @@
                 </tr>
             `).join('');
         }
+
+        function exportToExcel() {
+    if (!currentOrders || currentOrders.length === 0) {
+        return alert('لا توجد أوردرات لتصديرها!');
+    }
+
+    // ترويسة الأعمدة بالعربي
+    let csvContent = "\uFEFF"; // لدعم الحروف العربية في الإكسيل (UTF-8 BOM)
+    csvContent += "اسم العميل,الموبايل,موبايل ثان,المحافظة,المنطقة,العنوان,المنتجات,طريقة الشحن,شركة الشحن,طريقة الدفع,حالة الدفع,حالة الأوردر,ملاحظات\n";
+
+    // إضافة صفوف البيانات
+    currentOrders.forEach(o => {
+        const row = [
+            `"${o.customerName || ''}"`,
+            `"${o.phone || ''}"`,
+            `"${o.secondary_phone || ''}"`,
+            `"${o.governorate || ''}"`,
+            `"${o.city || ''}"`,
+            `"${o.address || ''}"`,
+            `"${o.items || ''}"`,
+            `"${o.shippingMethod || ''}"`,
+            `"${o.shippingCompany || ''}"`,
+            `"${o.paymentMethod || ''}"`,
+            `"${o.paymentStatus || ''}"`,
+            `"${o.status || ''}"`,
+            `"${o.notes || ''}"`
+        ];
+        csvContent += row.join(",") + "\n";
+    });
+
+    // إنشاء ملف وهمي وتحميله
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Orders_Export_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
     </script>
 </body>
 </html>
