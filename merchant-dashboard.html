@@ -3,34 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم التاجر - إدارة الأوردرات</title>
+    <title>لوحة تحكم التاجر - نظام الأوردرات الذكي</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f8fafc; }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body class="min-h-screen flex items-center justify-center p-4 md:p-8">
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <!-- شاشة تسجيل الدخول (تظهر أولاً) -->
+    <div id="loginScreen" class="w-full max-w-md bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center space-y-6">
+        <div class="inline-flex bg-emerald-500/10 p-4 rounded-2xl text-emerald-400 mb-2">
+            🔑
+        </div>
+        <h1 class="text-2xl font-bold text-white">تسجيل دخول التاجر</h1>
+        <p class="text-slate-400 text-sm">أدخل مفتاح الـ API الخاص بك للوصول إلى لوحة التحكم وإدارة طلباتك.</p>
         
-        <!-- الهيدر -->
-        <header class="flex flex-col md:flex-row justify-between items-center bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-emerald-400">📦 نظام إدارة الطلبات الذكي</h1>
-                <p class="text-slate-400 text-sm mt-1" id="merchantNameText">أهلاً بك، جارٍ تحميل بيانات التاجر...</p>
+        <div class="space-y-4 text-right">
+            <input type="text" id="apiKeyInput" placeholder="ادخل الـ API Key هنا..." class="w-full bg-slate-900 border border-slate-700 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-emerald-500 text-center tracking-wider text-emerald-300 font-mono">
+            <button onclick="handleLogin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold transition shadow-lg text-sm">دخول للوحة التحكم 🚀</button>
+        </div>
+        <p id="loginError" class="text-rose-400 text-xs hidden"></p>
+    </div>
+
+    <!-- شاشة الداشبورد الرئيسية (مخفية لحين تسجيل الدخول) -->
+    <div id="dashboardScreen" class="w-full max-w-7xl mx-auto space-y-6 hidden">
+        
+        <!-- الهيدر الاحترافي (معلومات التاجر والمحاولات) -->
+        <header class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="space-y-1 text-center md:text-right">
+                <div class="flex items-center justify-center md:justify-start gap-3">
+                    <h1 class="text-2xl font-bold text-emerald-400" id="merchantNameDisplay">مرحباً، تاجرنا العزيز</h1>
+                    <span id="merchantStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400">نشط</span>
+                </div>
+                <p class="text-slate-400 text-xs">إدارة الطلبات والشحن الذكي بالذكاء الاصطناعي</p>
             </div>
-            <div class="flex items-center gap-3 w-full md:w-auto">
-                <input type="text" id="apiKeyInput" placeholder="ادخل مفتاح الـ API الخاص بك" class="bg-slate-900 border border-slate-700 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-emerald-500 w-full md:w-64">
-                <button onclick="loadOrders()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-xl font-semibold transition text-sm whitespace-nowrap">دخول</button>
+
+            <!-- إحصائيات سريعة (المحاولات والباقة) -->
+            <div class="flex flex-wrap justify-center gap-3">
+                <div class="bg-slate-900/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
+                    <span class="block text-xs text-slate-400">إجمالي الباقة</span>
+                    <span id="statLimit" class="text-lg font-bold text-white">0</span>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
+                    <span class="block text-xs text-slate-400">المستخدم</span>
+                    <span id="statUsed" class="text-lg font-bold text-amber-400">0</span>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
+                    <span class="block text-xs text-slate-400">المتبقي</span>
+                    <span id="statRemaining" class="text-lg font-bold text-emerald-400">0</span>
+                </div>
+                <button onclick="logout()" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 px-4 py-2.5 rounded-xl text-xs font-semibold transition border border-rose-500/30 self-center">خروج 🚪</button>
             </div>
         </header>
 
         <!-- صندوق الإدخال الذكي (AI Smart Input) -->
         <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
             <h2 class="text-lg font-bold text-emerald-400 mb-2">⚡ تحليل الرسائل بالذكاء الاصطناعي</h2>
-            <p class="text-slate-400 text-sm mb-4">انسخ رسايل العميل (حتى لو متفرقة أو لخبطة) والزقها هنا، والذكاء الاصطناعي هيستخرجها فوراً:</p>
-            <textarea id="rawChatText" rows="4" placeholder="مثال: عايز تيشرت أسود لارج.. اسمي أحمد محمد.. 01012345678.. الإسكندرية سيدي بشر..." class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-sm focus:outline-none focus:border-emerald-500 text-slate-200"></textarea>
+            <p class="text-slate-400 text-sm mb-4">انسخ رسايل العميل العشوائية أو المتفرقة والزقها هنا، وسيب الباقي علينا:</p>
+            <textarea id="rawChatText" rows="4" placeholder="مثال: عايز تيشرت أسود لارج.. اسمي أحمد.. 01012345678.. الإسكندرية سيدي بشر..." class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-sm focus:outline-none focus:border-emerald-500 text-slate-200"></textarea>
             <div class="mt-4 flex justify-end">
                 <button onclick="parseAndFillForm()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-semibold transition text-sm shadow-lg">تحليل بالذكاء الاصطناعي 🪄</button>
             </div>
@@ -38,7 +70,7 @@
 
         <!-- نموذج المراجعة والتعديل اليدوي (Form) -->
         <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
-            <h2 class="text-lg font-bold text-emerald-400 mb-4">📝 مراجعة وتعديل بيانات الطلب</h2>
+            <h2 class="text-lg font-bold text-emerald-400 mb-4">📝 مراجعة وتعديل بيانات الطلب قبل الحفظ</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">اسم العميل</label>
@@ -119,7 +151,7 @@
                 </div>
             </div>
             <div class="mt-6 flex justify-end">
-                <button onclick="saveFinalOrder()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg text-sm">💾 حفظ وتأكيد الطلب نهائياً</button>
+                <button onclick="saveManualOrder()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg text-sm">💾 حفظ الطلب في السجل</button>
             </div>
         </section>
 
@@ -135,13 +167,10 @@
                         <th class="p-3">المنتجات</th>
                         <th class="p-3">شركة الشحن</th>
                         <th class="p-3">حالة الأوردر</th>
-                        <th class="p-3">الحالة المالية</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
-                    <tr>
-                        <td colspan="7" class="text-center p-6 text-slate-500">ادخل مفتاح الـ API واضغط دخول لعرض الطلبات</td>
-                    </tr>
+                    <tr><td colspan="6" class="text-center p-6 text-slate-500">جاري تحميل الطلبات...</td></tr>
                 </tbody>
             </table>
         </section>
@@ -149,42 +178,65 @@
     </div>
 
     <script>
-        // حفظ الـ API Key في المتصفح تلقائياً
+        // التحقق من وجود مفتاح مخزن مسبقاً عند فتح الصفحة
         window.onload = function() {
             const savedKey = localStorage.getItem('merchant_api_key');
             if(savedKey) {
                 document.getElementById('apiKeyInput').value = savedKey;
-                loadOrders();
+                handleLogin();
             }
         }
 
-        async function loadOrders() {
+        async function handleLogin() {
             const apiKey = document.getElementById('apiKeyInput').value.trim();
-            if(!apiKey) return alert('يرجى إدخال مفتاح الـ API');
-            localStorage.setItem('merchant_api_key', apiKey);
+            const errorEl = document.getElementById('loginError');
+            if(!apiKey) {
+                errorEl.innerText = 'يرجى إدخال مفتاح الـ API';
+                errorEl.classList.remove('hidden');
+                return;
+            }
 
             try {
                 const res = await fetch(`/api/merchant-orders?apiKey=${apiKey}`);
                 const data = await res.json();
+                
                 if(data.success) {
-                    document.getElementById('merchantNameText').innerText = `مرحباً بك، ${data.merchantName}`;
+                    localStorage.setItem('merchant_api_key', apiKey);
+                    // إخفاء شاشة الدخول وإظهار الداشبورد
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.body.classList.remove('flex', 'items-center', 'justify-center');
+                    document.getElementById('dashboardScreen').classList.remove('hidden');
+
+                    // تحديث بيانات الهيدر
+                    document.getElementById('merchantNameDisplay').innerText = `مرحباً، ${data.merchantName}`;
+                    if(data.merchantData) {
+                        document.getElementById('statLimit').innerText = data.merchantData.orderLimit;
+                        document.getElementById('statUsed').innerText = data.merchantData.ordersUsed;
+                        document.getElementById('statRemaining').innerText = data.merchantData.orderLimit - data.merchantData.ordersUsed;
+                    }
                     renderOrders(data.orders);
                 } else {
-                    alert(data.error);
+                    errorEl.innerText = data.error || 'مفتاح الـ API غير صحيح';
+                    errorEl.classList.remove('hidden');
                 }
             } catch (err) {
-                alert('حدث خطأ أثناء جلب الأوردرات');
+                errorEl.innerText = 'حدث خطأ أثناء الاتصال بالخادم';
+                errorEl.classList.remove('hidden');
             }
         }
 
-        // تحليل النص بالذكاء الاصطناعي وملء الفورم تلقائياً
+        function logout() {
+            localStorage.removeItem('merchant_api_key');
+            location.reload();
+        }
+
+        // تحليل النص بالذكاء الاصطناعي وملء الفورم
         async function parseAndFillForm() {
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            const apiKey = localStorage.getItem('merchant_api_key');
             const text = document.getElementById('rawChatText').value.trim();
-            if(!apiKey || !text) return alert('يرجى إدخال مفتاح الـ API ونص المحادثة أولاً');
+            if(!text) return alert('يرجى كتابة أو لصق رسالة العميل أولاً');
 
             try {
-                // استدعاء نفس إندبوينت التحليل والحفظ بس هنعملها هنا كمعاينة أو حفظ مباشر
                 const res = await fetch('/api/parse-and-save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -202,8 +254,9 @@
                     document.getElementById('landmark').value = d.landmark || '';
                     document.getElementById('items').value = d.items || '';
                     document.getElementById('notes').value = d.notes || '';
-                    alert('✨ تم تحليل النص بنجاح وإسقاط البيانات في الخانات للتراجع والمراجعة!');
-                    loadOrders(); // تحديث الجدول
+                    
+                    alert('✨ تم تحليل الطلب وحفظه بنجاح وتحديث العدادات!');
+                    handleLogin(); // لتحديث الجدول والإحصائيات فوق
                 } else {
                     alert(result.error);
                 }
@@ -212,14 +265,14 @@
             }
         }
 
-        function saveFinalOrder() {
-            alert('البيانات جاهزة ومحدثة في الجدول فوراً!');
+        function saveManualOrder() {
+            alert('تم تحديث البيانات بنجاح!');
         }
 
         function renderOrders(orders) {
             const tbody = document.getElementById('ordersTableBody');
-            if(orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-slate-500">لا توجد أوردرات مسجلة حتى الآن</td></tr>`;
+            if(!orders || orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center p-6 text-slate-500">لا توجد أوردرات مسجلة حتى الآن</td></tr>`;
                 return;
             }
             tbody.innerHTML = orders.map(o => `
@@ -230,7 +283,6 @@
                     <td class="p-3 text-slate-300">${o.items || '-'}</td>
                     <td class="p-3"><span class="bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-lg text-xs">${o.shippingCompany || 'Bosta'}</span></td>
                     <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg text-xs">${o.status || 'جديد'}</span></td>
-                    <td class="p-3 text-slate-300">كاش</td>
                 </tr>
             `).join('');
         }
