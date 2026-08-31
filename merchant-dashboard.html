@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة متابعة الأوردرات - التاجر</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- مكتبة لتصدير ملفات Excel بسهولة -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen font-sans">
+
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- الهيدر -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-emerald-400">📦 لوحة تحكم التاجر</h1>
+        <p id="merchantName" class="text-sm text-gray-400">جاري تحميل بيانات المتجر...</p>
+      </div>
+      <div class="mt-4 md:mt-0 flex gap-3">
+        <button onclick="loadOrders()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-medium transition">🔄 تحديث البيانات</button>
+        <button onclick="exportToExcel()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-medium transition">📥 تحميل كملف Excel</button>
+      </div>
+    </div>
+
+    <!-- شاشة إدخال المفتاح لو لم يكن محفوظاً -->
+    <div id="authSection" class="max-w-md mx-auto bg-gray-900 border border-gray-800 p-6 rounded-xl shadow-lg mt-12 hidden">
+      <h2 class="text-lg font-semibold mb-4 text-center">أدخل مفتاح التشغيل (API Key)</h2>
+      <input type="text" id="apiKeyInput" placeholder="أدخل مفتاح الـ API الخاص بك..." class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm mb-4 focus:outline-none focus:border-emerald-500">
+      <button onclick="saveApiKey()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-lg font-medium transition">دخول للوحة التحكم</button>
+    </div>
+
+    <!-- جدول الأوردرات -->
+    <div id="dashboardSection" class="hidden">
+      <div class="overflow-x-auto bg-gray-900 border border-gray-800 rounded-xl shadow-lg">
+        <table class="w-full text-right text-sm">
+          <thead class="bg-gray-800 text-gray-300 uppercase text-xs">
+            <tr>
+              <th class="p-3">التاريخ</th>
+              <th class="p-3">الاسم</th>
+              <th class="p-3">الموبايل</th>
+              <th class="p-3">المحافظة</th>
+              <th class="p-3">العنوان التفصيلي</th>
+              <th class="p-3">المنتجات</th>
+              <th class="p-3">ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody" class="divide-y divide-gray-800">
+            <!-- سيتم تعبئة الأوردرات هنا برمجياً -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentOrders = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedKey = localStorage.getItem("merchant_api_key");
+      if (savedKey) {
+        document.getElementById("apiKeyInput").value = savedKey;
+        loadOrders();
+      } else {
+        document.getElementById("authSection").classList.remove("hidden");
+      }
+    });
+
+    function saveApiKey() {
+      const key = document.getElementById("apiKeyInput").value.trim();
+      if (!key) return alert("الرجاء إدخال مفتاح صحيح");
+      localStorage.setItem("merchant_api_key", key);
+      document.getElementById("authSection").classList.add("hidden");
+      loadOrders();
+    }
+
+    async function loadOrders() {
+      const apiKey = localStorage.getItem("merchant_api_key");
+      if (!apiKey) {
+        document.getElementById("authSection").classList.remove("hidden");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/merchant/orders?apiKey=${apiKey}`);
+        const data = await res.json();
+
+        if (!data.success) {
+          alert(data.error || "المفتاح غير صحيح أو منتهي الصلاحية");
+          localStorage.removeItem("merchant_api_key");
+          document.getElementById("authSection").classList.remove("hidden");
+          document.getElementById("dashboardSection").classList.add("hidden");
+          return;
+        }
+
+        document.getElementById("merchantName").innerText = `مرحباً، ${data.merchantName} (إجمالي الطلبات: ${data.orders.length})`;
+        document.getElementById("dashboardSection").classList.remove("hidden");
+        document.getElementById("authSection").classList.add("hidden");
+
+        currentOrders = data.orders;
+        const tbody = document.getElementById("ordersTableBody");
+        tbody.innerHTML = "";
+
+        if (currentOrders.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-gray-500">لا توجد أوردرات مسجلة حتى الآن</td></tr>`;
+          return;
+        }
+
+        currentOrders.forEach(order => {
+          const row = document.createElement("tr");
+          row.className = "hover:bg-gray-800/50 transition";
+          row.innerHTML = `
+            <td class="p-3 text-gray-400 text-xs">${new Date(order.createdAt).toLocaleString('ar-EG')}</td>
+            <td class="p-3 font-medium">${order.customerName || '-'}</td>
+            <td class="p-3 dir-ltr text-left">${order.phone || '-'}</td>
+            <td class="p-3">${order.governorate || '-'}</td>
+            <td class="p-3">${order.address || '-'} ${order.landmark ? '(' + order.landmark + ')' : ''}</td>
+            <td class="p-3 text-emerald-400 font-medium">${order.items || '-'}</td>
+            <td class="p-3 text-gray-400">${order.notes || '-'}</td>
+          `;
+          tbody.appendChild(row);
+        });
+
+      } catch (err) {
+        alert("حدث خطأ أثناء الاتصال بالسيرفر");
+      }
+    }
+
+    function exportToExcel() {
+      if (currentOrders.length === 0) return alert("لا توجد بيانات للتصدير!");
+      
+      const dataToExport = currentOrders.map(o => ({
+        "التاريخ": new Date(o.createdAt).toLocaleString('ar-EG'),
+        "الاسم": o.customerName || '',
+        "الموبايل": o.phone || '',
+        "موبايل ثاني": o.secondary_phone || '',
+        "المحافظة": o.governorate || '',
+        "المدينة": o.city || '',
+        "العنوان التفصيلي": o.address || '',
+        "علامة مميزة": o.landmark || '',
+        "المنتجات": o.items || '',
+        "ملاحظات": o.notes || ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+      XLSX.writeFile(workbook, "Merchant_Orders.xlsx");
+    }
+  </script>
+</body>
+</html>
