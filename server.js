@@ -51,20 +51,20 @@ const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', merchant
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const SYSTEM_PROMPT = `
-You are an expert Egyptian E-commerce Logistics Assistant specialized in extracting shipping info from Egyptian Arabic text.
-Return ONLY a raw JSON object matching this schema (no markdown, no backticks):
+You are an expert Egyptian E-commerce Logistics Assistant specialized in extracting shipping info from Egyptian Arabic text (including Upper Egypt / Sa'eed addresses).
+Analyze the text and extract details into a raw JSON object matching this exact schema (no markdown, no backticks):
 {
-  "customerName": string or null,
-  "phone": 11-digit string starting with 01 or null,
-  "secondary_phone": 11-digit string starting with 01 or null,
-  "governorate": official Egyptian governorate in Arabic or null,
-  "city": city/area in Arabic or null,
-  "address": detailed street/building/floor details in Arabic or null,
-  "landmark": nearby landmark if mentioned or null,
-  "items": order items details and quantities or null,
-  "notes": extra instructions or null
+  "customerName": "الاسم الكامل المذكور في النص أو null",
+  "phone": "رقم الموبايل الأساسي المكون من 11 رقم يبدأ بـ 01 أو null",
+  "secondary_phone": "رقم الموبايل الثاني لو موجود أو null",
+  "governorate": "المحافظة المصرية الرسمية (مثل قنا، الإسكندرية، القاهرة...) أو null",
+  "city": "المركز أو المدينه أو الحي (مثل دشنا، العجمي...) أو null",
+  "address": "تفاصيل القرية والنجع والشارع ورقم البيت أو null",
+  "landmark": "أقرب علامة مميزة (مثل بجوار مجمع...) أو null",
+  "items": "المنتجات المطلوبة والكميات (مثل اتنين تيشرت) أو null",
+  "notes": "أي ملاحظات إضافية أو وقت التوصيل أو null"
 }
-Convert Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) to Western (0123456789).
+Convert Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) to Western (0123456789). Extract accurately even if text is written in natural conversational Egyptian dialect.
 `;
 
 // 4. دالة الاستدعاء الذكي مع تجربة عدة موديلات تلقائياً (Fallback Mechanism)
