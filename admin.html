@@ -119,7 +119,7 @@
 
     async function fetchMerchants() {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/admin/merchants?adminKey=${encodeURIComponent(adminSecretKey)}`);
+        const res = await fetch(`${API_BASE_URL}/api/admin-merchants?adminKey=${encodeURIComponent(adminSecretKey)}`);
         const data = await res.json();
 
         if (!data.success) {
@@ -194,7 +194,7 @@
       const orderLimit = Number(document.getElementById('orderLimit').value);
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/admin/merchants`, {
+        const res = await fetch(`${API_BASE_URL}/api/admin-merchants`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ adminKey: adminSecretKey, name, email, googleSheetUrl, orderLimit })
@@ -215,10 +215,10 @@
 
     async function toggleMerchantStatus(id, newStatus) {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/admin/merchants/${id}`, {
+        const res = await fetch(`${API_BASE_URL}/api/admin-merchants?id=${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ adminKey: adminSecretKey, status: newStatus })
+          body: JSON.stringify({ adminKey: adminSecretKey, status: newStatus, merchantId: id })
         });
 
         const data = await res.json();
