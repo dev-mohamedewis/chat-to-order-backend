@@ -186,6 +186,22 @@
           </button>
         </div>
 
+        <!-- قسم البحث والفلترة السريعة -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-3 mb-4 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+            <!-- شريط البحث -->
+            <div class="w-full md:w-1/2">
+                <input type="text" id="searchInput" oninput="filterOrders()" placeholder="🔍 ابحث باسم العميل أو رقم الموبايل..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            
+            <!-- أزرار الفلترة حسب الحالة -->
+            <div class="flex flex-wrap gap-1.5 w-full md:w-auto justify-end">
+                <button onclick="setStatusFilter('all')" id="filter-all" class="filter-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">الكل</button>
+                <button onclick="setStatusFilter('جديد')" id="filter-جديد" class="filter-btn bg-slate-700 text-slate-300 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition">جديد</button>
+                <button onclick="setStatusFilter('تم الشحن')" id="filter-تم الشحن" class="filter-btn bg-slate-700 text-slate-300 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition">تم الشحن</button>
+                <button onclick="setStatusFilter('تم التسليم')" id="filter-تم التسليم" class="filter-btn bg-slate-700 text-slate-300 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition">تم التسليم</button>
+            </div>
+        </div>
+
         <!-- جدول الأوردرات -->
         <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 overflow-x-auto">
             <h2 class="text-lg font-bold text-emerald-400 mb-4">📋 سجل الأوردرات المسجلة</h2>
@@ -211,6 +227,11 @@
 
     <script>
         let currentOrders = [];
+        let activeStatusFilter = 'all';
+
+        // جوه دالة جلب البيانات من الـ API:
+        currentOrders = data.orders;
+        renderOrders(currentOrders);
 
         window.onload = function() {
             const savedKey = localStorage.getItem('merchant_api_key');
@@ -394,78 +415,80 @@
             }
         }
 
-       function renderOrders(orders) {
-            const tbody = document.getElementById('ordersTableBody');
-            
-            // حساب الإحصائيات البصرية فوراً
-            const total = orders.length;
-            const newOrders = orders.filter(o => !o.status || o.status === 'جديد').length;
-            const shippedOrders = orders.filter(o => o.status === 'تم الشحن').length;
-            const deliveredOrders = orders.filter(o => o.status === 'تم التسليم').length;
+      / تحديث الكروت البصرية فوق خالص
+    const total = orders.length;
+    const newOrders = orders.filter(o => !o.status || o.status === 'جديد').length;
+    const shippedOrders = orders.filter(o => o.status === 'تم الشحن').length;
+    const deliveredOrders = orders.filter(o => o.status === 'تم التسليم').length;
 
-            document.getElementById('statTotalOrders').innerText = total;
-            document.getElementById('statNewOrders').innerText = newOrders;
-            document.getElementById('statShippedOrders').innerText = shippedOrders;
-            document.getElementById('statDeliveredOrders').innerText = deliveredOrders;
+    document.getElementById('statTotalOrders').innerText = total;
+    document.getElementById('statNewOrders').innerText = newOrders;
+    document.getElementById('statShippedOrders').innerText = shippedOrders;
+    document.getElementById('statDeliveredOrders').innerText = deliveredOrders;
 
-            if(!orders || orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-slate-500">لا توجد أوردرات مسجلة حتى الآن</td></tr>`;
-                return;
-            }
+    // تطبيق الفلتر والبحث الحالي وعرض الجدول
+    filterOrders();
+}
 
-            tbody.innerHTML = orders.map(o => `
-                <tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition">
-                    <td class="p-3 font-semibold text-white">${o.customerName || 'بدون اسم'}</td>
-                    <td class="p-3 text-slate-300">${o.phone || '-'}</td>
-                    <td class="p-3 text-slate-300">${o.governorate || ''} - ${o.city || ''}</td>
-                    <td class="p-3 text-slate-300">${o.items || '-'}</td>
-                    <td class="p-3"><span class="bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-lg text-xs">${o.shippingCompany || 'Bosta'}</span></td>
-                    <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg text-xs">${o.status || 'جديد'}</span></td>
-                    <td class="p-3 text-center">
-                        <button onclick="editOrder('${o._id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition border border-amber-500/30">تعديل ✏️</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function exportToExcel() {
-    if (!currentOrders || currentOrders.length === 0) {
-        return alert('لا توجد أوردرات لتصديرها!');
+// 2. دالة تحديد الفلتر (الكل، جديد، تم الشحن، إلخ)
+function setStatusFilter(status) {
+    activeStatusFilter = status;
+    
+    // تلوين الأزرار بصرياً
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.replace('bg-indigo-600', 'bg-slate-700');
+        btn.classList.replace('text-white', 'text-slate-300');
+    });
+    const activeBtn = document.getElementById(`filter-${status}`);
+    if(activeBtn) {
+        activeBtn.classList.replace('bg-slate-700', 'bg-indigo-600');
+        activeBtn.classList.replace('text-slate-300', 'text-white');
     }
+    
+    filterOrders();
+}
 
-    // ترويسة الأعمدة بالعربي
-    let csvContent = "\uFEFF"; // لدعم الحروف العربية في الإكسيل (UTF-8 BOM)
-    csvContent += "اسم العميل,الموبايل,موبايل ثان,المحافظة,المنطقة,العنوان,المنتجات,طريقة الشحن,شركة الشحن,طريقة الدفع,حالة الدفع,حالة الأوردر,ملاحظات\n";
-
-    // إضافة صفوف البيانات
-    currentOrders.forEach(o => {
-        const row = [
-            `"${o.customerName || ''}"`,
-            `"${o.phone || ''}"`,
-            `"${o.secondary_phone || ''}"`,
-            `"${o.governorate || ''}"`,
-            `"${o.city || ''}"`,
-            `"${o.address || ''}"`,
-            `"${o.items || ''}"`,
-            `"${o.shippingMethod || ''}"`,
-            `"${o.shippingCompany || ''}"`,
-            `"${o.paymentMethod || ''}"`,
-            `"${o.paymentStatus || ''}"`,
-            `"${o.status || ''}"`,
-            `"${o.notes || ''}"`
-        ];
-        csvContent += row.join(",") + "\n";
+// 3. دالة البحث والفلترة مع بعض
+function filterOrders() {
+    const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
+    
+    let filtered = currentOrders.filter(o => {
+        const nameMatch = (o.customerName || '').toLowerCase().includes(searchText);
+        const phoneMatch = (o.phone || '').includes(searchText);
+        return nameMatch || phoneMatch;
     });
 
-    // إنشاء ملف وهمي وتحميله
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Orders_Export_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (activeStatusFilter !== 'all') {
+        filtered = filtered.filter(o => {
+            const status = o.status || 'جديد';
+            return status === activeStatusFilter;
+        });
+    }
+
+    renderOrdersTableOnly(filtered);
+}
+
+// 4. دالة رسم الجدول بالبيانات المفلترة فقط
+function renderOrdersTableOnly(orders) {
+    const tbody = document.getElementById('ordersTableBody');
+    if(!orders || orders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-slate-500">لا توجد أوردرات مطابقة للبحث أو الفلتر</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = orders.map(o => `
+        <tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition">
+            <td class="p-3 font-semibold text-white">${o.customerName || 'بدون اسم'}</td>
+            <td class="p-3 text-slate-300">${o.phone || '-'}</td>
+            <td class="p-3 text-slate-300">${o.governorate || ''} - ${o.city || ''}</td>
+            <td class="p-3 text-slate-300">${o.items || '-'}</td>
+            <td class="p-3"><span class="bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-lg text-xs">${o.shippingCompany || 'Bosta'}</span></td>
+            <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg text-xs">${o.status || 'جديد'}</span></td>
+            <td class="p-3 text-center">
+                <button onclick="editOrder('${o._id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition border border-amber-500/30">تعديل ✏️</button>
+            </td>
+        </tr>
+    `).join('');
 }
     </script>
 </body>
