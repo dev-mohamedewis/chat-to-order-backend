@@ -1,154 +1,239 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة متابعة الأوردرات - التاجر</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- مكتبة لتصدير ملفات Excel بسهولة -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم التاجر - إدارة الأوردرات</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f8fafc; }
+    </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen font-sans">
+<body class="min-h-screen p-4 md:p-8">
 
-  <div class="max-w-7xl mx-auto px-4 py-8">
-    <!-- الهيدر -->
-    <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-4">
-      <div>
-        <h1 class="text-2xl font-bold text-emerald-400">📦 لوحة تحكم التاجر</h1>
-        <p id="merchantName" class="text-sm text-gray-400">جاري تحميل بيانات المتجر...</p>
-      </div>
-      <div class="mt-4 md:mt-0 flex gap-3">
-        <button onclick="loadOrders()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-medium transition">🔄 تحديث البيانات</button>
-        <button onclick="exportToExcel()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-medium transition">📥 تحميل كملف Excel</button>
-      </div>
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- الهيدر -->
+        <header class="flex flex-col md:flex-row justify-between items-center bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-emerald-400">📦 نظام إدارة الطلبات الذكي</h1>
+                <p class="text-slate-400 text-sm mt-1" id="merchantNameText">أهلاً بك، جارٍ تحميل بيانات التاجر...</p>
+            </div>
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <input type="text" id="apiKeyInput" placeholder="ادخل مفتاح الـ API الخاص بك" class="bg-slate-900 border border-slate-700 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-emerald-500 w-full md:w-64">
+                <button onclick="loadOrders()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-xl font-semibold transition text-sm whitespace-nowrap">دخول</button>
+            </div>
+        </header>
+
+        <!-- صندوق الإدخال الذكي (AI Smart Input) -->
+        <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+            <h2 class="text-lg font-bold text-emerald-400 mb-2">⚡ تحليل الرسائل بالذكاء الاصطناعي</h2>
+            <p class="text-slate-400 text-sm mb-4">انسخ رسايل العميل (حتى لو متفرقة أو لخبطة) والزقها هنا، والذكاء الاصطناعي هيستخرجها فوراً:</p>
+            <textarea id="rawChatText" rows="4" placeholder="مثال: عايز تيشرت أسود لارج.. اسمي أحمد محمد.. 01012345678.. الإسكندرية سيدي بشر..." class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-sm focus:outline-none focus:border-emerald-500 text-slate-200"></textarea>
+            <div class="mt-4 flex justify-end">
+                <button onclick="parseAndFillForm()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-semibold transition text-sm shadow-lg">تحليل بالذكاء الاصطناعي 🪄</button>
+            </div>
+        </section>
+
+        <!-- نموذج المراجعة والتعديل اليدوي (Form) -->
+        <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+            <h2 class="text-lg font-bold text-emerald-400 mb-4">📝 مراجعة وتعديل بيانات الطلب</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">اسم العميل</label>
+                    <input type="text" id="customerName" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">رقم الموبايل الأساسي</label>
+                    <input type="text" id="phone" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">رقم موبايل ثانِ (إن وجد)</label>
+                    <input type="text" id="secondary_phone" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">المحافظة</label>
+                    <input type="text" id="governorate" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">المنطقة / المركز / الحي</label>
+                    <input type="text" id="city" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">تفاصيل العنوان</label>
+                    <input type="text" id="address" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">علامة مميزة</label>
+                    <input type="text" id="landmark" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs text-slate-400 mb-1">المنتجات والكميات</label>
+                    <input type="text" id="items" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">طريقة الشحن</label>
+                    <select id="shippingMethod" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                        <option value="عادي">شحن عادى</option>
+                        <option value="سريع">شحن سريع</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">شركة الشحن</label>
+                    <select id="shippingCompany" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                        <option value="Bosta">بوسطة (Bosta)</option>
+                        <option value="Mylerz">مايلرز (Mylerz)</option>
+                        <option value="Other">أخرى</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">طريقة الدفع</label>
+                    <select id="paymentMethod" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                        <option value="كاش عند الاستلام">كاش عند الاستلام</option>
+                        <option value="انستاباي">إنستاباي (InstaPay)</option>
+                        <option value="فودافون كاش">فودافون كاش</option>
+                        <option value="مسبق">دفع مسبق</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">حالة الدفع</label>
+                    <select id="paymentStatus" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                        <option value="معلق">معلق (غير مدفوع)</option>
+                        <option value="مدفوع">مدفوع</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">حالة الطلب</label>
+                    <select id="orderStatus" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                        <option value="جديد">جديد</option>
+                        <option value="قيد التجهيز">قيد التجهيز</option>
+                        <option value="تم الشحن">تم الشحن</option>
+                        <option value="تم التسليم">تم التسليم</option>
+                        <option value="مرجع">مرجع</option>
+                    </select>
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs text-slate-400 mb-1">ملاحظات إضافية</label>
+                    <input type="text" id="notes" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="saveFinalOrder()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg text-sm">💾 حفظ وتأكيد الطلب نهائياً</button>
+            </div>
+        </section>
+
+        <!-- جدول الأوردرات -->
+        <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 overflow-x-auto">
+            <h2 class="text-lg font-bold text-emerald-400 mb-4">📋 سجل الأوردرات المسجلة</h2>
+            <table class="w-full text-right border-collapse text-sm">
+                <thead>
+                    <tr class="border-b border-slate-700 text-slate-400">
+                        <th class="p-3">العميل</th>
+                        <th class="p-3">الموبايل</th>
+                        <th class="p-3">العنوان / المنطقة</th>
+                        <th class="p-3">المنتجات</th>
+                        <th class="p-3">شركة الشحن</th>
+                        <th class="p-3">حالة الأوردر</th>
+                        <th class="p-3">الحالة المالية</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center p-6 text-slate-500">ادخل مفتاح الـ API واضغط دخول لعرض الطلبات</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
     </div>
 
-    <!-- شاشة إدخال المفتاح لو لم يكن محفوظاً -->
-    <div id="authSection" class="max-w-md mx-auto bg-gray-900 border border-gray-800 p-6 rounded-xl shadow-lg mt-12 hidden">
-      <h2 class="text-lg font-semibold mb-4 text-center">أدخل مفتاح التشغيل (API Key)</h2>
-      <input type="text" id="apiKeyInput" placeholder="أدخل مفتاح الـ API الخاص بك..." class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm mb-4 focus:outline-none focus:border-emerald-500">
-      <button onclick="saveApiKey()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-lg font-medium transition">دخول للوحة التحكم</button>
-    </div>
-
-    <!-- جدول الأوردرات -->
-    <div id="dashboardSection" class="hidden">
-      <div class="overflow-x-auto bg-gray-900 border border-gray-800 rounded-xl shadow-lg">
-        <table class="w-full text-right text-sm">
-          <thead class="bg-gray-800 text-gray-300 uppercase text-xs">
-            <tr>
-              <th class="p-3">التاريخ</th>
-              <th class="p-3">الاسم</th>
-              <th class="p-3">الموبايل</th>
-              <th class="p-3">المحافظة</th>
-              <th class="p-3">العنوان التفصيلي</th>
-              <th class="p-3">المنتجات</th>
-              <th class="p-3">ملاحظات</th>
-            </tr>
-          </thead>
-          <tbody id="ordersTableBody" class="divide-y divide-gray-800">
-            <!-- سيتم تعبئة الأوردرات هنا برمجياً -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ⚠️ رابط سيرفر Vercel الخاص بك
-    const API_BASE_URL = 'https://chat-to-order-backend-mohamed-ewis-projects.vercel.app';
-    let currentOrders = [];
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const savedKey = localStorage.getItem("merchant_api_key");
-      if (savedKey) {
-        document.getElementById("apiKeyInput").value = savedKey;
-        loadOrders();
-      } else {
-        document.getElementById("authSection").classList.remove("hidden");
-      }
-    });
-
-    function saveApiKey() {
-      const key = document.getElementById("apiKeyInput").value.trim();
-      if (!key) return alert("الرجاء إدخال مفتاح صحيح");
-      localStorage.setItem("merchant_api_key", key);
-      document.getElementById("authSection").classList.add("hidden");
-      loadOrders();
-    }
-
-    async function loadOrders() {
-      const apiKey = localStorage.getItem("merchant_api_key");
-      if (!apiKey) {
-        document.getElementById("authSection").classList.remove("hidden");
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/merchant-orders?apiKey=${encodeURIComponent(apiKey)}`);
-        const data = await res.json();
-
-        if (!data.success) {
-          alert(data.error || "المفتاح غير صحيح أو منتهي الصلاحية");
-          localStorage.removeItem("merchant_api_key");
-          document.getElementById("authSection").classList.remove("hidden");
-          document.getElementById("dashboardSection").classList.add("hidden");
-          return;
+    <script>
+        // حفظ الـ API Key في المتصفح تلقائياً
+        window.onload = function() {
+            const savedKey = localStorage.getItem('merchant_api_key');
+            if(savedKey) {
+                document.getElementById('apiKeyInput').value = savedKey;
+                loadOrders();
+            }
         }
 
-        document.getElementById("merchantName").innerText = `مرحباً، ${data.merchantName} (إجمالي الطلبات: ${data.orders.length})`;
-        document.getElementById("dashboardSection").classList.remove("hidden");
-        document.getElementById("authSection").classList.add("hidden");
+        async function loadOrders() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if(!apiKey) return alert('يرجى إدخال مفتاح الـ API');
+            localStorage.setItem('merchant_api_key', apiKey);
 
-        currentOrders = data.orders;
-        const tbody = document.getElementById("ordersTableBody");
-        tbody.innerHTML = "";
-
-        if (currentOrders.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-gray-500">لا توجد أوردرات مسجلة حتى الآن</td></tr>`;
-          return;
+            try {
+                const res = await fetch(`/api/merchant/orders?apiKey=${apiKey}`);
+                const data = await res.json();
+                if(data.success) {
+                    document.getElementById('merchantNameText').innerText = `مرحباً بك، ${data.merchantName}`;
+                    renderOrders(data.orders);
+                } else {
+                    alert(data.error);
+                }
+            } catch (err) {
+                alert('حدث خطأ أثناء جلب الأوردرات');
+            }
         }
 
-        currentOrders.forEach(order => {
-          const row = document.createElement("tr");
-          row.className = "hover:bg-gray-800/50 transition";
-          row.innerHTML = `
-            <td class="p-3 text-gray-400 text-xs">${new Date(order.createdAt).toLocaleString('ar-EG')}</td>
-            <td class="p-3 font-medium">${order.customerName || '-'}</td>
-            <td class="p-3 dir-ltr text-left">${order.phone || '-'}</td>
-            <td class="p-3">${order.governorate || '-'}</td>
-            <td class="p-3">${order.address || '-'} ${order.landmark ? '(' + order.landmark + ')' : ''}</td>
-            <td class="p-3 text-emerald-400 font-medium">${order.items || '-'}</td>
-            <td class="p-3 text-gray-400">${order.notes || '-'}</td>
-          `;
-          tbody.appendChild(row);
-        });
+        // تحليل النص بالذكاء الاصطناعي وملء الفورم تلقائياً
+        async function parseAndFillForm() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            const text = document.getElementById('rawChatText').value.trim();
+            if(!apiKey || !text) return alert('يرجى إدخال مفتاح الـ API ونص المحادثة أولاً');
 
-      } catch (err) {
-        alert("حدث خطأ أثناء الاتصال بالسيرفر: " + err.message);
-      }
-    }
+            try {
+                // استدعاء نفس إندبوينت التحليل والحفظ بس هنعملها هنا كمعاينة أو حفظ مباشر
+                const res = await fetch('/api/parse-and-save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey, text })
+                });
+                const result = await res.json();
+                if(result.success) {
+                    const d = result.data;
+                    document.getElementById('customerName').value = d.customerName || '';
+                    document.getElementById('phone').value = d.phone || '';
+                    document.getElementById('secondary_phone').value = d.secondary_phone || '';
+                    document.getElementById('governorate').value = d.governorate || '';
+                    document.getElementById('city').value = d.city || '';
+                    document.getElementById('address').value = d.address || '';
+                    document.getElementById('landmark').value = d.landmark || '';
+                    document.getElementById('items').value = d.items || '';
+                    document.getElementById('notes').value = d.notes || '';
+                    alert('✨ تم تحليل النص بنجاح وإسقاط البيانات في الخانات للتراجع والمراجعة!');
+                    loadOrders(); // تحديث الجدول
+                } else {
+                    alert(result.error);
+                }
+            } catch(e) {
+                alert('فشل الاتصال بالخادم للتحليل');
+            }
+        }
 
-    function exportToExcel() {
-      if (currentOrders.length === 0) return alert("لا توجد بيانات للتصدير!");
-      
-      const dataToExport = currentOrders.map(o => ({
-        "التاريخ": new Date(o.createdAt).toLocaleString('ar-EG'),
-        "الاسم": o.customerName || '',
-        "الموبايل": o.phone || '',
-        "موبايل ثاني": o.secondary_phone || '',
-        "المحافظة": o.governorate || '',
-        "المدينة": o.city || '',
-        "العنوان التفصيلي": o.address || '',
-        "علامة مميزة": o.landmark || '',
-        "المنتجات": o.items || '',
-        "ملاحظات": o.notes || ''
-      }));
+        function saveFinalOrder() {
+            alert('البيانات جاهزة ومحدثة في الجدول فوراً!');
+        }
 
-      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
-      XLSX.writeFile(workbook, "Merchant_Orders.xlsx");
-    }
-  </script>
+        function renderOrders(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            if(orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-slate-500">لا توجد أوردرات مسجلة حتى الآن</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = orders.map(o => `
+                <tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition">
+                    <td class="p-3 font-semibold text-white">${o.customerName || 'بدون اسم'}</td>
+                    <td class="p-3 text-slate-300">${o.phone || '-'}</td>
+                    <td class="p-3 text-slate-300">${o.governorate || ''} - ${o.city || ''}</td>
+                    <td class="p-3 text-slate-300">${o.items || '-'}</td>
+                    <td class="p-3"><span class="bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-lg text-xs">${o.shippingCompany || 'Bosta'}</span></td>
+                    <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg text-xs">${o.status || 'جديد'}</span></td>
+                    <td class="p-3 text-slate-300">كاش</td>
+                </tr>
+            `).join('');
+        }
+    </script>
 </body>
 </html>
