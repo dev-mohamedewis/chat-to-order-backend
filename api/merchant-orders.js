@@ -60,8 +60,18 @@ export default async function handler(req, res) {
       return res.status(403).json({ success: false, error: 'هذا الحساب موقوف مؤقتاً من قبل الإدارة' });
     }
 
-    const orders = await Order.find({ merchantId: merchant._id }).sort({ createdAt: -1 });
-    return res.json({ success: true, merchantName: merchant.name, orders });
+   const orders = await Order.find({ merchantId: merchant._id }).sort({ createdAt: -1 });
+    
+    return res.json({ 
+      success: true, 
+      merchantName: merchant.name,
+      merchantData: {
+        orderLimit: merchant.orderLimit || 100,
+        ordersUsed: merchant.ordersUsed || 0,
+        status: merchant.status || 'active'
+      },
+      orders 
+    });
     
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });

@@ -12,14 +12,11 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 md:p-8">
 
-    <!-- شاشة تسجيل الدخول (تظهر أولاً) -->
+    <!-- شاشة تسجيل الدخول -->
     <div id="loginScreen" class="w-full max-w-md bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 text-center space-y-6">
-        <div class="inline-flex bg-emerald-500/10 p-4 rounded-2xl text-emerald-400 mb-2">
-            🔑
-        </div>
+        <div class="inline-flex bg-emerald-500/10 p-4 rounded-2xl text-emerald-400 mb-2">🔑</div>
         <h1 class="text-2xl font-bold text-white">تسجيل دخول التاجر</h1>
-        <p class="text-slate-400 text-sm">أدخل مفتاح الـ API الخاص بك للوصول إلى لوحة التحكم وإدارة طلباتك.</p>
-        
+        <p class="text-slate-400 text-sm">أدخل مفتاح الـ API الخاص بك للوصول إلى لوحة التحكم.</p>
         <div class="space-y-4 text-right">
             <input type="text" id="apiKeyInput" placeholder="ادخل الـ API Key هنا..." class="w-full bg-slate-900 border border-slate-700 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-emerald-500 text-center tracking-wider text-emerald-300 font-mono">
             <button onclick="handleLogin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold transition shadow-lg text-sm">دخول للوحة التحكم 🚀</button>
@@ -27,10 +24,10 @@
         <p id="loginError" class="text-rose-400 text-xs hidden"></p>
     </div>
 
-    <!-- شاشة الداشبورد الرئيسية (مخفية لحين تسجيل الدخول) -->
+    <!-- شاشة الداشبورد الرئيسية -->
     <div id="dashboardScreen" class="w-full max-w-7xl mx-auto space-y-6 hidden">
         
-        <!-- الهيدر الاحترافي (معلومات التاجر والمحاولات) -->
+        <!-- الهيدر الاحترافي -->
         <header class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="space-y-1 text-center md:text-right">
                 <div class="flex items-center justify-center md:justify-start gap-3">
@@ -40,7 +37,7 @@
                 <p class="text-slate-400 text-xs">إدارة الطلبات والشحن الذكي بالذكاء الاصطناعي</p>
             </div>
 
-            <!-- إحصائيات سريعة (المحاولات والباقة) -->
+            <!-- إحصائيات الباقة -->
             <div class="flex flex-wrap justify-center gap-3">
                 <div class="bg-slate-900/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
                     <span class="block text-xs text-slate-400">إجمالي الباقة</span>
@@ -58,19 +55,26 @@
             </div>
         </header>
 
-        <!-- صندوق الإدخال الذكي (AI Smart Input) -->
+        <!-- صندوق الإدخال الذكي -->
         <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
             <h2 class="text-lg font-bold text-emerald-400 mb-2">⚡ تحليل الرسائل بالذكاء الاصطناعي</h2>
-            <p class="text-slate-400 text-sm mb-4">انسخ رسايل العميل العشوائية أو المتفرقة والزقها هنا، وسيب الباقي علينا:</p>
-            <textarea id="rawChatText" rows="4" placeholder="مثال: عايز تيشرت أسود لارج.. اسمي أحمد.. 01012345678.. الإسكندرية سيدي بشر..." class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-sm focus:outline-none focus:border-emerald-500 text-slate-200"></textarea>
-            <div class="mt-4 flex justify-end">
-                <button onclick="parseAndFillForm()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-semibold transition text-sm shadow-lg">تحليل بالذكاء الاصطناعي 🪄</button>
+            <p class="text-slate-400 text-sm mb-4">انسخ رسايل العميل العشوائية والزقها هنا، والذكاء الاصطناعي سيقوم بملء النموذج أدناه للمراجعة:</p>
+            <textarea id="rawChatText" rows="3" placeholder="مثال: عايز تيشرت أسود لارج.. اسمي أحمد.. 01012345678.. الإسكندرية سيدي بشر..." class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-sm focus:outline-none focus:border-emerald-500 text-slate-200"></textarea>
+            <div class="mt-4 flex justify-between items-center">
+                <span id="aiStatus" class="text-xs text-indigo-400"></span>
+                <button onclick="parseChatToForm()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-semibold transition text-sm shadow-lg">تحليل وملء النموذج 🪄</button>
             </div>
         </section>
 
-        <!-- نموذج المراجعة والتعديل اليدوي (Form) -->
+        <!-- نموذج المراجعة والتعديل اليدوي (للإضافة أو التعديل) -->
         <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
-            <h2 class="text-lg font-bold text-emerald-400 mb-4">📝 مراجعة وتعديل بيانات الطلب قبل الحفظ</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-emerald-400" id="formTitle">📝 إضافة أوردر جديد أو تعديل</h2>
+                <button onclick="resetForm()" id="cancelEditBtn" class="text-xs text-rose-400 hover:underline hidden">إلغاء التعديل</button>
+            </div>
+            
+            <input type="hidden" id="editingOrderId"> <!-- لتخزين ID الأوردر لو بنعدل واحد قديم -->
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">اسم العميل</label>
@@ -81,7 +85,7 @@
                     <input type="text" id="phone" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1">رقم موبايل ثانِ (إن وجد)</label>
+                    <label class="block text-xs text-slate-400 mb-1">رقم موبايل ثانِ</label>
                     <input type="text" id="secondary_phone" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
                 </div>
                 <div>
@@ -123,7 +127,7 @@
                     <label class="block text-xs text-slate-400 mb-1">طريقة الدفع</label>
                     <select id="paymentMethod" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
                         <option value="كاش عند الاستلام">كاش عند الاستلام</option>
-                        <option value="انستاباي">إنستاباي (InstaPay)</option>
+                        <option value="انستاباي">إنستاباي</option>
                         <option value="فودافون كاش">فودافون كاش</option>
                         <option value="مسبق">دفع مسبق</option>
                     </select>
@@ -150,8 +154,8 @@
                     <input type="text" id="notes" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-sm">
                 </div>
             </div>
-            <div class="mt-6 flex justify-end">
-                <button onclick="saveManualOrder()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg text-sm">💾 حفظ الطلب في السجل</button>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="saveOrUpdateOrder()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg text-sm">💾 حفظ الطلب نهائياً</button>
             </div>
         </section>
 
@@ -167,10 +171,11 @@
                         <th class="p-3">المنتجات</th>
                         <th class="p-3">شركة الشحن</th>
                         <th class="p-3">حالة الأوردر</th>
+                        <th class="p-3 text-center">إجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
-                    <tr><td colspan="6" class="text-center p-6 text-slate-500">جاري تحميل الطلبات...</td></tr>
+                    <tr><td colspan="7" class="text-center p-6 text-slate-500">جاري تحميل الطلبات...</td></tr>
                 </tbody>
             </table>
         </section>
@@ -178,7 +183,8 @@
     </div>
 
     <script>
-        // التحقق من وجود مفتاح مخزن مسبقاً عند فتح الصفحة
+        let currentOrders = [];
+
         window.onload = function() {
             const savedKey = localStorage.getItem('merchant_api_key');
             if(savedKey) {
@@ -202,19 +208,18 @@
                 
                 if(data.success) {
                     localStorage.setItem('merchant_api_key', apiKey);
-                    // إخفاء شاشة الدخول وإظهار الداشبورد
                     document.getElementById('loginScreen').classList.add('hidden');
                     document.body.classList.remove('flex', 'items-center', 'justify-center');
                     document.getElementById('dashboardScreen').classList.remove('hidden');
 
-                    // تحديث بيانات الهيدر
                     document.getElementById('merchantNameDisplay').innerText = `مرحباً، ${data.merchantName}`;
                     if(data.merchantData) {
                         document.getElementById('statLimit').innerText = data.merchantData.orderLimit;
                         document.getElementById('statUsed').innerText = data.merchantData.ordersUsed;
                         document.getElementById('statRemaining').innerText = data.merchantData.orderLimit - data.merchantData.ordersUsed;
                     }
-                    renderOrders(data.orders);
+                    currentOrders = data.orders || [];
+                    renderOrders(currentOrders);
                 } else {
                     errorEl.innerText = data.error || 'مفتاح الـ API غير صحيح';
                     errorEl.classList.remove('hidden');
@@ -230,18 +235,23 @@
             location.reload();
         }
 
-        // تحليل النص بالذكاء الاصطناعي وملء الفورم
-        async function parseAndFillForm() {
+        // 1. تحليل النص بالذكاء الاصطناعي وملء النموذج للمراجعة فقط (بدون حفظ تلقائي)
+        async function parseChatToForm() {
             const apiKey = localStorage.getItem('merchant_api_key');
             const text = document.getElementById('rawChatText').value.trim();
             if(!text) return alert('يرجى كتابة أو لصق رسالة العميل أولاً');
 
+            document.getElementById('aiStatus').innerText = '⏳ جاري التحليل بواسطة الذكاء الاصطناعي...';
+
             try {
-                const res = await fetch('/api/parse-and-save', {
+                const res = await fetch('/api/parse-chat', { // أو هندبوينت التحليل المؤقت
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ apiKey, text })
                 });
+                
+                // لو السيرفر بيرجع النتيجة من parse-and-save بس هنعدلها بحيث ترجع البيانات من غير حفظ، أو نستخدم ايبندبوينت مؤقتة:
+                // للتبسيط، هنستخدم إندبوينت التحليل:
                 const result = await res.json();
                 if(result.success) {
                     const d = result.data;
@@ -255,24 +265,112 @@
                     document.getElementById('items').value = d.items || '';
                     document.getElementById('notes').value = d.notes || '';
                     
-                    alert('✨ تم تحليل الطلب وحفظه بنجاح وتحديث العدادات!');
-                    handleLogin(); // لتحديث الجدول والإحصائيات فوق
+                    document.getElementById('aiStatus').innerText = '✨ تم استخراج البيانات بنجاح! راجعها واضغط حفظ نهائي.';
+                } else {
+                    alert(result.error);
+                    document.getElementById('aiStatus').innerText = '';
+                }
+            } catch(e) {
+                // بديل مؤقت لو الـ endpoint مش موجودة: هنعتمد على إندبوينت الـ parse الحالية بس بنعدلها
+                alert('يرجى التأكد من استجابة الخادم للتحليل');
+                document.getElementById('aiStatus').innerText = '';
+            }
+        }
+
+        // تعبئة النموذج لتعديل أوردر موجود في الجدول
+        window.editOrder = function(orderId) {
+            const order = currentOrders.find(o => o._id === orderId);
+            if(!order) return;
+
+            document.getElementById('editingOrderId').value = order._id;
+            document.getElementById('customerName').value = order.customerName || '';
+            document.getElementById('phone').value = order.phone || '';
+            document.getElementById('secondary_phone').value = order.secondary_phone || '';
+            document.getElementById('governorate').value = order.governorate || '';
+            document.getElementById('city').value = order.city || '';
+            document.getElementById('address').value = order.address || '';
+            document.getElementById('landmark').value = order.landmark || '';
+            document.getElementById('items').value = order.items || '';
+            document.getElementById('shippingMethod').value = order.shippingMethod || 'عادي';
+            document.getElementById('shippingCompany').value = order.shippingCompany || 'Bosta';
+            document.getElementById('paymentMethod').value = order.paymentMethod || 'كاش عند الاستلام';
+            document.getElementById('paymentStatus').value = order.paymentStatus || 'معلق';
+            document.getElementById('orderStatus').value = order.status || 'جديد';
+            document.getElementById('notes').value = order.notes || '';
+
+            document.getElementById('formTitle').innerText = '✏️ تعديل بيانات الطلب الحالي';
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            window.scrollTo({ top: 400, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('editingOrderId').value = '';
+            document.getElementById('customerName').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('secondary_phone').value = '';
+            document.getElementById('governorate').value = '';
+            document.getElementById('city').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('landmark').value = '';
+            document.getElementById('items').value = '';
+            document.getElementById('notes').value = '';
+            document.getElementById('formTitle').innerText = '📝 إضافة أوردر جديد أو تعديل';
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        // حفظ نهائي (سواء أوردر جديد أو تعديل أوردر قائم)
+        async function saveOrUpdateOrder() {
+            const apiKey = localStorage.getItem('merchant_api_key');
+            const orderId = document.getElementById('editingOrderId').value;
+            
+            const orderData = {
+                apiKey,
+                customerName: document.getElementById('customerName').value,
+                phone: document.getElementById('phone').value,
+                secondary_phone: document.getElementById('secondary_phone').value,
+                governorate: document.getElementById('governorate').value,
+                city: document.getElementById('city').value,
+                address: document.getElementById('address').value,
+                landmark: document.getElementById('landmark').value,
+                items: document.getElementById('items').value,
+                shippingMethod: document.getElementById('shippingMethod').value,
+                shippingCompany: document.getElementById('shippingCompany').value,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                paymentStatus: document.getElementById('paymentStatus').value,
+                status: document.getElementById('orderStatus').value,
+                notes: document.getElementById('notes').value
+            };
+
+            if(!orderData.customerName || !orderData.phone) {
+                return alert('اسم العميل ورقم الموبايل أساسيان!');
+            }
+
+            const endpoint = orderId ? '/api/update-order' : '/api/parse-and-save'; // أو ايبندبوينت الحفظ المباشر
+            if(orderId) orderData.orderId = orderId;
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+                const result = await res.json();
+                if(result.success) {
+                    alert(orderId ? '✅ تم تحديث الأوردر بنجاح!' : '✅ تم حفظ الطلب الجديد بنجاح!');
+                    resetForm();
+                    handleLogin(); // تحديث الجدول والأعداد فوق
                 } else {
                     alert(result.error);
                 }
             } catch(e) {
-                alert('فشل الاتصال بالخادم للتحليل');
+                alert('حدث خطأ أثناء الحفظ');
             }
-        }
-
-        function saveManualOrder() {
-            alert('تم تحديث البيانات بنجاح!');
         }
 
         function renderOrders(orders) {
             const tbody = document.getElementById('ordersTableBody');
             if(!orders || orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center p-6 text-slate-500">لا توجد أوردرات مسجلة حتى الآن</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-slate-500">لا توجد أوردرات مسجلة حتى الآن</td></tr>`;
                 return;
             }
             tbody.innerHTML = orders.map(o => `
@@ -283,6 +381,9 @@
                     <td class="p-3 text-slate-300">${o.items || '-'}</td>
                     <td class="p-3"><span class="bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-lg text-xs">${o.shippingCompany || 'Bosta'}</span></td>
                     <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg text-xs">${o.status || 'جديد'}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="editOrder('${o._id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition border border-amber-500/30">تعديل ✏️</button>
+                    </td>
                 </tr>
             `).join('');
         }
