@@ -58,7 +58,7 @@ Analyze the text and extract details into a raw JSON object matching this exact 
 Convert Eastern Arabic numerals to Western.
 `;
 
-const CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+const CANDIDATE_MODELS = ['gemini-3.6-flash','gemini-2.5-flash', 'gemini-1.5-flash'];
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
