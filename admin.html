@@ -106,7 +106,7 @@
   </div>
 
   <script>
-    // ⚠️ ضع رابط سيرفر Vercel الخاص بك هنا
+
     const API_BASE_URL = 'https://chat-to-order-backend-mohamed-ewis-projects.vercel.app';
     let adminSecretKey = '';
 
@@ -202,11 +202,11 @@
 
         const data = await res.json();
         if (data.success) {
-          alert(`✅ تم إضافة التاجر بنجاح!\nالـ API Key الخاص به هو: ${data.merchant.apiKey}`);
+          alert(`تم إضافة التاجر بنجاح!\nالـ API Key الخاص به هو: ${data.merchant.apiKey}`);
           document.getElementById('addMerchantForm').reset();
           fetchMerchants();
         } else {
-          alert('❌ خطأ: ' + data.error);
+          alert(' خطأ: ' + data.error);
         }
       } catch (err) {
         alert('حدث خطأ: ' + err.message);
@@ -225,7 +225,7 @@
         if (data.success) {
           fetchMerchants();
         } else {
-          alert('❌ خطأ: ' + data.error);
+          alert('خطأ: ' + data.error);
         }
       } catch (err) {
         alert('حدث خطأ: ' + err.message);

@@ -9,8 +9,31 @@ async function connectToDatabase() {
   isConnected = true;
 }
 
-const merchantSchema = new mongoose.Schema({ name: String, apiKey: String, status: String });
-const orderSchema = new mongoose.Schema({ merchantId: mongoose.Schema.Types.ObjectId, customerName: String, phone: String, secondary_phone: String, governorate: String, city: String, address: String, landmark: String, items: String, notes: String, createdAt: { type: Date, default: Date.now } });
+const merchantSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  googleSheetUrl: { type: String, required: true },
+  apiKey: { type: String, required: true, unique: true },
+  status: { type: String, enum: ['active', 'suspended'], default: 'active' },
+  orderLimit: { type: Number, default: 100 },
+  ordersUsed: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const orderSchema = new mongoose.Schema({
+  merchantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', required: true },
+  customerName: String,
+  phone: String,
+  secondary_phone: String,
+  governorate: String,
+  city: String,
+  address: String,
+  landmark: String,
+  items: String,
+  notes: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
 const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', merchantSchema);
 const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 
@@ -22,14 +45,24 @@ export default async function handler(req, res) {
 
   try {
     await connectToDatabase();
+    
     const apiKey = req.query.apiKey || req.headers['x-api-key'];
-    if (!apiKey) return res.status(401).json({ success: false, error: 'مفتاح الـ API مفقود' });
+    if (!apiKey) {
+      return res.status(401).json({ success: false, error: 'مفتاح الـ API مفقود' });
+    }
 
     const merchant = await Merchant.findOne({ apiKey });
-    if (!merchant) return res.status(403).json({ success: false, error: 'مفتاح غير صحيح' });
+    if (!merchant) {
+      return res.status(403).json({ success: false, error: 'مفتاح غير صحيح أو غير مسجل' });
+    }
+
+    if (merchant.status === 'suspended') {
+      return res.status(403).json({ success: false, error: 'هذا الحساب موقوف مؤقتاً من قبل الإدارة' });
+    }
 
     const orders = await Order.find({ merchantId: merchant._id }).sort({ createdAt: -1 });
     return res.json({ success: true, merchantName: merchant.name, orders });
+    
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }

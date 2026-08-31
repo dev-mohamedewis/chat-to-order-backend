@@ -54,6 +54,8 @@
   </div>
 
   <script>
+    // ⚠️ رابط سيرفر Vercel الخاص بك
+    const API_BASE_URL = 'https://chat-to-order-backend-mohamed-ewis-projects.vercel.app';
     let currentOrders = [];
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -82,7 +84,7 @@
       }
 
       try {
-        const res = await fetch(`/api/merchant/orders?apiKey=${apiKey}`);
+        const res = await fetch(`${API_BASE_URL}/api/merchant-orders?apiKey=${encodeURIComponent(apiKey)}`);
         const data = await res.json();
 
         if (!data.success) {
@@ -122,7 +124,7 @@
         });
 
       } catch (err) {
-        alert("حدث خطأ أثناء الاتصال بالسيرفر");
+        alert("حدث خطأ أثناء الاتصال بالسيرفر: " + err.message);
       }
     }
 
