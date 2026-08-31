@@ -56,14 +56,52 @@ Return ONLY a raw JSON object matching this schema (no markdown, no backticks):
 {
   "customerName": string or null,
   "phone": 11-digit string starting with 01 or null,
+  "secondary_phone": 11-digit string starting with 01 or null,
   "governorate": official Egyptian governorate in Arabic or null,
-  "address": street/building/floor/city details in Arabic or null,
-  "items": order items details or null
+  "city": city/area in Arabic or null,
+  "address": detailed street/building/floor details in Arabic or null,
+  "landmark": nearby landmark if mentioned or null,
+  "items": order items details and quantities or null,
+  "notes": extra instructions or null
 }
 Convert Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) to Western (0123456789).
 `;
 
-// 4. دالة حفظ البيانات في Google Sheet الخاص بالتاجر
+// 4. دالة الاستدعاء الذكي مع تجربة عدة موديلات تلقائياً (Fallback Mechanism)
+const CANDIDATE_MODELS = [
+  process.env.GEMINI_MODEL, // للتحكم الخارجي من Vercel لو لزم الأمر
+  'gemini-3.6-flash',       // الموديل الأساسي الأحدث
+  'gemini-2.5-flash',       // بديل أول
+  'gemini-2.0-flash',       // بديل ثاني
+  'gemini-1.5-flash'        // بديل مستقر نهائي
+].filter(Boolean);
+
+async function parseTextWithFallback(text) {
+  let lastError;
+
+  for (const modelName of CANDIDATE_MODELS) {
+    try {
+      console.log(`Trying Gemini model: ${modelName}...`);
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: text,
+        config: {
+          systemInstruction: SYSTEM_PROMPT,
+          responseMimeType: 'application/json',
+          temperature: 0.1,
+        },
+      });
+      return response; // نجح الموديل، يرجع بالنتيجة فوراً
+    } catch (err) {
+      console.warn(`Model ${modelName} failed: ${err.message}. Trying next...`);
+      lastError = err;
+    }
+  }
+
+  throw new Error(`فشلت جميع موديلات Gemini المتاحة: ${lastError?.message}`);
+}
+
+// 5. دالة حفظ البيانات في Google Sheet الخاص بالتاجر
 async function saveToGoogleSheet(appsScriptUrl, data) {
   const response = await fetch(appsScriptUrl, {
     method: 'POST',
@@ -71,17 +109,24 @@ async function saveToGoogleSheet(appsScriptUrl, data) {
     body: JSON.stringify(data),
   });
 
-  const result = await response.json();
+  const rawText = await response.text();
+  let result;
+  
+  try {
+    result = JSON.parse(rawText);
+  } catch (err) {
+    throw new Error('رابط Google Sheet الخاص بالتاجر غير صحيح أو غير منشور كـ Public (Anyone)');
+  }
+
   if (result.status !== 'success' && result.result !== 'success') {
     throw new Error(result.error || result.message || 'فشل حفظ الطلب في Google Sheet');
   }
   return result;
 }
 
-// 5. الـ Endpoint الرئيسي لاستقبال الطلبات من إضافة الكروم
+// 6. الـ Endpoint الرئيسي لاستقبال الطلبات من إضافة الكروم
 app.post('/api/parse-and-save', async (req, res) => {
   try {
-    // الاتصال بقاعدة البيانات أولاً وضمان الجاهزية
     await connectToDatabase();
 
     const { text, apiKey } = req.body;
@@ -93,7 +138,6 @@ app.post('/api/parse-and-save', async (req, res) => {
       return res.status(401).json({ success: false, error: 'مفتاح الـ API Key مطلوب' });
     }
 
-    // التحقق من التاجر في قاعدة البيانات
     const merchant = await Merchant.findOne({ apiKey });
 
     if (!merchant) {
@@ -108,20 +152,11 @@ app.post('/api/parse-and-save', async (req, res) => {
       return res.status(403).json({ success: false, error: 'لقد استنفدت حد الطلبات المسموح به في باقتك' });
     }
 
-    // تحليل النص باستخدام Gemini (الموديل المستقر)
-    const aiResponse = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: text,
-      config: {
-        systemInstruction: SYSTEM_PROMPT,
-        responseMimeType: 'application/json',
-        temperature: 0.1,
-      },
-    });
-
+    // تحليل النص باستخدام آلية البدائل التلقائية للموديلات
+    const aiResponse = await parseTextWithFallback(text);
     const parsedData = JSON.parse(aiResponse.text);
 
-    // إرسال البيانات لشيت جوجل الخاص بالتاجر
+    // إرسال البيانات لشيت جوجل
     await saveToGoogleSheet(merchant.googleSheetUrl, parsedData);
 
     // خصم طلب من رصيد التاجر
@@ -147,8 +182,6 @@ app.post('/api/parse-and-save', async (req, res) => {
 // ==========================================
 // مسارات لوحة تحكم الأدمن (Admin Routes)
 // ==========================================
-
-// 1. إنشاء تاجر جديد
 app.post('/api/admin/merchants', async (req, res) => {
   try {
     await connectToDatabase();
@@ -175,7 +208,6 @@ app.post('/api/admin/merchants', async (req, res) => {
   }
 });
 
-// 2. عرض جميع التجار ومتابعة استهلاكهم
 app.get('/api/admin/merchants', async (req, res) => {
   try {
     await connectToDatabase();
@@ -192,7 +224,6 @@ app.get('/api/admin/merchants', async (req, res) => {
   }
 });
 
-// 3. تعديل حالة التاجر (تفعيل / إيقاف / تجديد رصيد)
 app.patch('/api/admin/merchants/:id', async (req, res) => {
   try {
     await connectToDatabase();
@@ -218,16 +249,12 @@ app.patch('/api/admin/merchants/:id', async (req, res) => {
   }
 });
 
-// ==========================================
-// عرض لوحة الأدمن (Static Files)
-// ==========================================
 app.use(express.static(__dirname));
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'admin.html'));
 });
 
-// تشغيل المحلي والتصدير لـ Vercel
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
