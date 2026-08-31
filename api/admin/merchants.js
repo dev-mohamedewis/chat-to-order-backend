@@ -23,18 +23,26 @@ const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', merchant
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
     await connectToDatabase();
 
-    // إنشاء تاجر جديد
+    // 1. جلب قائمة التجار (GET)
+    if (req.method === 'GET') {
+      const { adminKey } = req.query;
+      if (adminKey !== process.env.ADMIN_SECRET_KEY) {
+        return res.status(401).json({ success: false, error: 'كلمة سر الأدمن غير صحيحة' });
+      }
+      const merchants = await Merchant.find({}).sort({ createdAt: -1 });
+      return res.json({ success: true, merchants });
+    }
+
+    // 2. إضافة تاجر جديد (POST)
     if (req.method === 'POST') {
       const { adminKey, name, email, orderLimit } = req.body;
-      
-      // تأكد من تطابق كلمة سر الأدمن مع المتواجدة في متغيرات البيئة بـ Vercel
       if (adminKey !== process.env.ADMIN_SECRET_KEY) {
         return res.status(401).json({ success: false, error: 'كلمة سر الأدمن غير صحيحة' });
       }
@@ -49,16 +57,6 @@ export default async function handler(req, res) {
       
       await newMerchant.save();
       return res.json({ success: true, merchant: newMerchant });
-    }
-
-    // جلب قائمة كل التجار (اختياري للأدمن)
-    if (req.method === 'GET') {
-      const { adminKey } = req.query;
-      if (adminKey !== process.env.ADMIN_SECRET_KEY) {
-        return res.status(401).json({ success: false, error: 'غير مصرح' });
-      }
-      const merchants = await Merchant.find({}).sort({ createdAt: -1 });
-      return res.json({ success: true, merchants });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
