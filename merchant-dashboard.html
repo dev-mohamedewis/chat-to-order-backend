@@ -164,7 +164,7 @@
             localStorage.setItem('merchant_api_key', apiKey);
 
             try {
-                const res = await fetch(`/api/merchant/orders?apiKey=${apiKey}`);
+                const res = await fetch(`/api/merchant-orders?apiKey=${apiKey}`);
                 const data = await res.json();
                 if(data.success) {
                     document.getElementById('merchantNameText').innerText = `مرحباً بك، ${data.merchantName}`;
