@@ -37,7 +37,25 @@
                 <p class="text-slate-400 text-xs">إدارة الطلبات والشحن الذكي بالذكاء الاصطناعي</p>
             </div>
 
-            <!-- كروت الإحصائيات البصرية (Analytics Cards) -->
+            <!-- إحصائيات الباقة -->
+            <div class="flex flex-wrap justify-center gap-3">
+                <div class="bg-slate-900/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
+                    <span class="block text-xs text-slate-400">إجمالي الباقة</span>
+                    <span id="statLimit" class="text-lg font-bold text-white">0</span>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
+                    <span class="block text-xs text-slate-400">المستخدم</span>
+                    <span id="statUsed" class="text-lg font-bold text-amber-400">0</span>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
+                    <span class="block text-xs text-slate-400">المتبقي</span>
+                    <span id="statRemaining" class="text-lg font-bold text-emerald-400">0</span>
+                </div>
+                <button onclick="logout()" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 px-4 py-2.5 rounded-xl text-xs font-semibold transition border border-rose-500/30 self-center">خروج 🚪</button>
+            </div>
+        </header>
+
+        <!-- كروت الإحصائيات البصرية -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg text-center">
                 <span class="block text-xs text-slate-400 mb-1">📦 إجمالي الأوردرات</span>
@@ -57,28 +75,10 @@
             </div>
         </div>
 
-            <!-- إحصائيات الباقة -->
-            <div class="flex flex-wrap justify-center gap-3">
-                <div class="bg-slate-900/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
-                    <span class="block text-xs text-slate-400">إجمالي الباقة</span>
-                    <span id="statLimit" class="text-lg font-bold text-white">0</span>
-                </div>
-                <div class="bg-slate-900/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
-                    <span class="block text-xs text-slate-400">المستخدم</span>
-                    <span id="statUsed" class="text-lg font-bold text-amber-400">0</span>
-                </div>
-                <div class="bg-slate-900/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
-                    <span class="block text-xs text-slate-400">المتبقي</span>
-                    <span id="statRemaining" class="text-lg font-bold text-emerald-400">0</span>
-                </div>
-                <button onclick="logout()" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 px-4 py-2.5 rounded-xl text-xs font-semibold transition border border-rose-500/30 self-center">خروج 🚪</button>
-            </div>
-        </header>
-
         <!-- صندوق الإدخال الذكي -->
         <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
             <h2 class="text-lg font-bold text-emerald-400 mb-2">⚡ تحليل الرسائل بالذكاء الاصطناعي</h2>
-            <p class="text-slate-400 text-sm mb-4">انسخ رسايل العميل العشوائية والزقها هنا، والذكاء الاصطناعي سيقوم بملء النموذج أدناه للمراجعة:</p>
+            <p class="text-slate-400 text-sm mb-4">انسخ رسايل العميل والزقها هنا، والذكاء الاصطناعي سيملء النموذج أدناه للمراجعة:</p>
             <textarea id="rawChatText" rows="3" placeholder="مثال: عايز تيشرت أسود لارج.. اسمي أحمد.. 01012345678.. الإسكندرية سيدي بشر..." class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-sm focus:outline-none focus:border-emerald-500 text-slate-200"></textarea>
             <div class="mt-4 flex justify-between items-center">
                 <span id="aiStatus" class="text-xs text-indigo-400"></span>
@@ -86,14 +86,14 @@
             </div>
         </section>
 
-        <!-- نموذج المراجعة والتعديل اليدوي (للإضافة أو التعديل) -->
+        <!-- نموذج المراجعة والتعديل -->
         <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-emerald-400" id="formTitle">📝 إضافة أوردر جديد أو تعديل</h2>
                 <button onclick="resetForm()" id="cancelEditBtn" class="text-xs text-rose-400 hover:underline hidden">إلغاء التعديل</button>
             </div>
             
-            <input type="hidden" id="editingOrderId"> <!-- لتخزين ID الأوردر لو بنعدل واحد قديم -->
+            <input type="hidden" id="editingOrderId">
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -179,32 +179,28 @@
             </div>
         </section>
 
-        <div class="flex justify-between items-center mb-4">
-             <h2 class="text-lg font-bold text-emerald-400">📋 سجل الأوردرات المسجلة</h2>
-          <button onclick="exportToExcel()" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 px-4 py-2 rounded-xl text-xs font-semibold transition border border-emerald-600/30 flex items-center gap-2">
-                📥 تصدير إلى Excel (CSV)
-          </button>
-        </div>
-
-        <!-- قسم البحث والفلترة السريعة -->
-        <div class="flex flex-col md:flex-row justify-between items-center gap-3 mb-4 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
-            <!-- شريط البحث -->
-            <div class="w-full md:w-1/2">
-                <input type="text" id="searchInput" oninput="filterOrders()" placeholder="🔍 ابحث باسم العميل أو رقم الموبايل..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-            </div>
-            
-            <!-- أزرار الفلترة حسب الحالة -->
-            <div class="flex flex-wrap gap-1.5 w-full md:w-auto justify-end">
-                <button onclick="setStatusFilter('all')" id="filter-all" class="filter-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">الكل</button>
-                <button onclick="setStatusFilter('جديد')" id="filter-جديد" class="filter-btn bg-slate-700 text-slate-300 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition">جديد</button>
-                <button onclick="setStatusFilter('تم الشحن')" id="filter-تم الشحن" class="filter-btn bg-slate-700 text-slate-300 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition">تم الشحن</button>
-                <button onclick="setStatusFilter('تم التسليم')" id="filter-تم التسليم" class="filter-btn bg-slate-700 text-slate-300 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition">تم التسليم</button>
-            </div>
-        </div>
-
-        <!-- جدول الأوردرات -->
+        <!-- جدول الأوردرات والفلاتر -->
         <section class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 overflow-x-auto">
-            <h2 class="text-lg font-bold text-emerald-400 mb-4">📋 سجل الأوردرات المسجلة</h2>
+            <div class="flex flex-col md:flex-row justify-between items-center gap-3 mb-4">
+                <h2 class="text-lg font-bold text-emerald-400">📋 سجل الأوردرات المسجلة</h2>
+                <button onclick="exportToExcel()" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 px-4 py-2 rounded-xl text-xs font-semibold transition border border-emerald-600/30 flex items-center gap-2">
+                    📥 تصدير إلى Excel (CSV)
+                </button>
+            </div>
+
+            <!-- شريط البحث والفلترة -->
+            <div class="flex flex-col md:flex-row justify-between items-center gap-3 mb-4 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+                <div class="w-full md:w-1/2">
+                    <input type="text" id="searchInput" oninput="filterOrders()" placeholder="🔍 ابحث باسم العميل أو رقم الموبايل..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="flex flex-wrap gap-1.5 w-full md:w-auto justify-end">
+                    <button onclick="setStatusFilter('all')" id="filter-all" class="filter-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">الكل</button>
+                    <button onclick="setStatusFilter('جديد')" id="filter-جديد" class="filter-btn bg-slate-700 text-slate-300 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition">جديد</button>
+                    <button onclick="setStatusFilter('تم الشحن')" id="filter-تم الشحن" class="filter-btn bg-slate-700 text-slate-300 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition">تم الشحن</button>
+                    <button onclick="setStatusFilter('تم التسليم')" id="filter-تم التسليم" class="filter-btn bg-slate-700 text-slate-300 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition">تم التسليم</button>
+                </div>
+            </div>
+
             <table class="w-full text-right border-collapse text-sm">
                 <thead>
                     <tr class="border-b border-slate-700 text-slate-400">
@@ -228,10 +224,6 @@
     <script>
         let currentOrders = [];
         let activeStatusFilter = 'all';
-
-        // جوه دالة جلب البيانات من الـ API:
-        currentOrders = data.orders;
-        renderOrders(currentOrders);
 
         window.onload = function() {
             const savedKey = localStorage.getItem('merchant_api_key');
@@ -266,8 +258,8 @@
                         document.getElementById('statUsed').innerText = data.merchantData.ordersUsed;
                         document.getElementById('statRemaining').innerText = data.merchantData.orderLimit - data.merchantData.ordersUsed;
                     }
-                    currentOrders = data.orders || [];
-                    renderOrders(currentOrders);
+                    
+                    renderOrders(data.orders || []);
                 } else {
                     errorEl.innerText = data.error || 'مفتاح الـ API غير صحيح';
                     errorEl.classList.remove('hidden');
@@ -283,7 +275,79 @@
             location.reload();
         }
 
-        // 1. تحليل النص بالذكاء الاصطناعي وملء النموذج للمراجعة فقط (بدون حفظ تلقائي)
+        function renderOrders(orders) {
+            currentOrders = orders || [];
+
+            const total = currentOrders.length;
+            const newOrders = currentOrders.filter(o => !o.status || o.status === 'جديد').length;
+            const shippedOrders = currentOrders.filter(o => o.status === 'تم الشحن').length;
+            const deliveredOrders = currentOrders.filter(o => o.status === 'تم التسليم').length;
+
+            document.getElementById('statTotalOrders').innerText = total;
+            document.getElementById('statNewOrders').innerText = newOrders;
+            document.getElementById('statShippedOrders').innerText = shippedOrders;
+            document.getElementById('statDeliveredOrders').innerText = deliveredOrders;
+
+            filterOrders();
+        }
+
+        function setStatusFilter(status) {
+            activeStatusFilter = status;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.replace('bg-indigo-600', 'bg-slate-700');
+                btn.classList.replace('text-white', 'text-slate-300');
+            });
+            const activeBtn = document.getElementById(`filter-${status}`);
+            if(activeBtn) {
+                activeBtn.classList.replace('bg-slate-700', 'bg-indigo-600');
+                activeBtn.classList.replace('text-slate-300', 'text-white');
+            }
+            
+            filterOrders();
+        }
+
+        function filterOrders() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            let filtered = currentOrders.filter(o => {
+                const nameMatch = (o.customerName || '').toLowerCase().includes(searchText);
+                const phoneMatch = (o.phone || '').includes(searchText);
+                return nameMatch || phoneMatch;
+            });
+
+            if (activeStatusFilter !== 'all') {
+                filtered = filtered.filter(o => {
+                    const status = o.status || 'جديد';
+                    return status === activeStatusFilter;
+                });
+            }
+
+            renderOrdersTableOnly(filtered);
+        }
+
+        function renderOrdersTableOnly(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            if(!orders || orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-slate-500">لا توجد أوردرات مطابقة للبحث أو الفلتر</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = orders.map(o => `
+                <tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition">
+                    <td class="p-3 font-semibold text-white">${o.customerName || 'بدون اسم'}</td>
+                    <td class="p-3 text-slate-300">${o.phone || '-'}</td>
+                    <td class="p-3 text-slate-300">${o.governorate || ''} - ${o.city || ''}</td>
+                    <td class="p-3 text-slate-300">${o.items || '-'}</td>
+                    <td class="p-3"><span class="bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-lg text-xs">${o.shippingCompany || 'Bosta'}</span></td>
+                    <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg text-xs">${o.status || 'جديد'}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="editOrder('${o._id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition border border-amber-500/30">تعديل ✏️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
         async function parseChatToForm() {
             const apiKey = localStorage.getItem('merchant_api_key');
             const text = document.getElementById('rawChatText').value.trim();
@@ -292,14 +356,12 @@
             document.getElementById('aiStatus').innerText = '⏳ جاري التحليل بواسطة الذكاء الاصطناعي...';
 
             try {
-                const res = await fetch('/api/parse-chat', { // أو هندبوينت التحليل المؤقت
+                const res = await fetch('/api/parse-chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ apiKey, text })
                 });
                 
-                // لو السيرفر بيرجع النتيجة من parse-and-save بس هنعدلها بحيث ترجع البيانات من غير حفظ، أو نستخدم ايبندبوينت مؤقتة:
-                // للتبسيط، هنستخدم إندبوينت التحليل:
                 const result = await res.json();
                 if(result.success) {
                     const d = result.data;
@@ -319,13 +381,11 @@
                     document.getElementById('aiStatus').innerText = '';
                 }
             } catch(e) {
-                // بديل مؤقت لو الـ endpoint مش موجودة: هنعتمد على إندبوينت الـ parse الحالية بس بنعدلها
                 alert('يرجى التأكد من استجابة الخادم للتحليل');
                 document.getElementById('aiStatus').innerText = '';
             }
         }
 
-        // تعبئة النموذج لتعديل أوردر موجود في الجدول
         window.editOrder = function(orderId) {
             const order = currentOrders.find(o => o._id === orderId);
             if(!order) return;
@@ -366,7 +426,6 @@
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
 
-        // حفظ نهائي (سواء أوردر جديد أو تعديل أوردر قائم)
         async function saveOrUpdateOrder() {
             const apiKey = localStorage.getItem('merchant_api_key');
             const orderId = document.getElementById('editingOrderId').value;
@@ -393,7 +452,7 @@
                 return alert('اسم العميل ورقم الموبايل أساسيان!');
             }
 
-            const endpoint = orderId ? '/api/update-order' : '/api/parse-and-save'; // أو ايبندبوينت الحفظ المباشر
+            const endpoint = orderId ? '/api/update-order' : '/api/parse-and-save';
             if(orderId) orderData.orderId = orderId;
 
             try {
@@ -406,7 +465,7 @@
                 if(result.success) {
                     alert(orderId ? '✅ تم تحديث الأوردر بنجاح!' : '✅ تم حفظ الطلب الجديد بنجاح!');
                     resetForm();
-                    handleLogin(); // تحديث الجدول والأعداد فوق
+                    handleLogin();
                 } else {
                     alert(result.error);
                 }
@@ -415,81 +474,42 @@
             }
         }
 
-      / تحديث الكروت البصرية فوق خالص
-    const total = orders.length;
-    const newOrders = orders.filter(o => !o.status || o.status === 'جديد').length;
-    const shippedOrders = orders.filter(o => o.status === 'تم الشحن').length;
-    const deliveredOrders = orders.filter(o => o.status === 'تم التسليم').length;
+        function exportToExcel() {
+            if (!currentOrders || currentOrders.length === 0) {
+                return alert('لا توجد أوردرات لتصديرها!');
+            }
 
-    document.getElementById('statTotalOrders').innerText = total;
-    document.getElementById('statNewOrders').innerText = newOrders;
-    document.getElementById('statShippedOrders').innerText = shippedOrders;
-    document.getElementById('statDeliveredOrders').innerText = deliveredOrders;
+            let csvContent = "\uFEFF";
+            csvContent += "اسم العميل,الموبايل,موبايل ثان,المحافظة,المنطقة,العنوان,المنتجات,طريقة الشحن,شركة الشحن,طريقة الدفع,حالة الدفع,حالة الأوردر,ملاحظات\n";
 
-    // تطبيق الفلتر والبحث الحالي وعرض الجدول
-    filterOrders();
-}
+            currentOrders.forEach(o => {
+                const row = [
+                    `"${o.customerName || ''}"`,
+                    `"${o.phone || ''}"`,
+                    `"${o.secondary_phone || ''}"`,
+                    `"${o.governorate || ''}"`,
+                    `"${o.city || ''}"`,
+                    `"${o.address || ''}"`,
+                    `"${o.items || ''}"`,
+                    `"${o.shippingMethod || ''}"`,
+                    `"${o.shippingCompany || ''}"`,
+                    `"${o.paymentMethod || ''}"`,
+                    `"${o.paymentStatus || ''}"`,
+                    `"${o.status || ''}"`,
+                    `"${o.notes || ''}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
 
-// 2. دالة تحديد الفلتر (الكل، جديد، تم الشحن، إلخ)
-function setStatusFilter(status) {
-    activeStatusFilter = status;
-    
-    // تلوين الأزرار بصرياً
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.replace('bg-indigo-600', 'bg-slate-700');
-        btn.classList.replace('text-white', 'text-slate-300');
-    });
-    const activeBtn = document.getElementById(`filter-${status}`);
-    if(activeBtn) {
-        activeBtn.classList.replace('bg-slate-700', 'bg-indigo-600');
-        activeBtn.classList.replace('text-slate-300', 'text-white');
-    }
-    
-    filterOrders();
-}
-
-// 3. دالة البحث والفلترة مع بعض
-function filterOrders() {
-    const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
-    
-    let filtered = currentOrders.filter(o => {
-        const nameMatch = (o.customerName || '').toLowerCase().includes(searchText);
-        const phoneMatch = (o.phone || '').includes(searchText);
-        return nameMatch || phoneMatch;
-    });
-
-    if (activeStatusFilter !== 'all') {
-        filtered = filtered.filter(o => {
-            const status = o.status || 'جديد';
-            return status === activeStatusFilter;
-        });
-    }
-
-    renderOrdersTableOnly(filtered);
-}
-
-// 4. دالة رسم الجدول بالبيانات المفلترة فقط
-function renderOrdersTableOnly(orders) {
-    const tbody = document.getElementById('ordersTableBody');
-    if(!orders || orders.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-slate-500">لا توجد أوردرات مطابقة للبحث أو الفلتر</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = orders.map(o => `
-        <tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition">
-            <td class="p-3 font-semibold text-white">${o.customerName || 'بدون اسم'}</td>
-            <td class="p-3 text-slate-300">${o.phone || '-'}</td>
-            <td class="p-3 text-slate-300">${o.governorate || ''} - ${o.city || ''}</td>
-            <td class="p-3 text-slate-300">${o.items || '-'}</td>
-            <td class="p-3"><span class="bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-lg text-xs">${o.shippingCompany || 'Bosta'}</span></td>
-            <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg text-xs">${o.status || 'جديد'}</span></td>
-            <td class="p-3 text-center">
-                <button onclick="editOrder('${o._id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition border border-amber-500/30">تعديل ✏️</button>
-            </td>
-        </tr>
-    `).join('');
-}
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Orders_Export_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     </script>
 </body>
 </html>
